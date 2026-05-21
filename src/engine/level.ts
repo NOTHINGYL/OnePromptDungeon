@@ -1,40 +1,124 @@
-import type { CellContent, HeroStats, LevelState, TileKind } from "../types/game";
+import type { CellContent, FloorState, HeroStats, Position, TileKind, TowerState } from "../types/game";
 
-const RAW_LEVEL = [
-  "###############",
-  "#...h.#..n.XC.#",
-  "#.###.#.###Y#.#",
-  "#...#...#b.H#.#",
-  "#Y#.#####.###.#",
-  "#s#...m...#d#.#",
-  "#.###.###.#.#.#",
-  "#..y#.#...#.#.#",
-  "###.#.#.###.#.#",
-  "#h..#...t...#.#",
-  "#.#####.#####.#",
-  "#...r...#...B.#",
-  "#.#.###.#.###.#",
-  "#P..s..Y..k.y.#",
-  "###############",
+type FloorDefinition = {
+  id: string;
+  title: string;
+  objective: string;
+  raw: string[];
+};
+
+const FLOORS: FloorDefinition[] = [
+  {
+    id: "floor-1",
+    title: "1F Stone Gate",
+    objective: "Learn the tower route: collect keys, gems, and reach the upper stairs.",
+    raw: [
+      "###############",
+      "#.....#...h.U.#",
+      "#.###Y#.###Y#.#",
+      "#...#...#t..#.#",
+      "#s#.#####.###.#",
+      "#.#...r...#y#.#",
+      "#.###.###.#.#.#",
+      "#..y#.#...#.#.#",
+      "###.#.#.###.#.#",
+      "#h..#...s...#.#",
+      "#.#####.#####.#",
+      "#...d...#...k.#",
+      "#.#.###.#.###.#",
+      "#P..s..Y..t.y.#",
+      "###############",
+    ],
+  },
+  {
+    id: "floor-2",
+    title: "2F Merchant Hall",
+    objective: "Spend gold wisely, open the moon door, and climb toward the sealed crown.",
+    raw: [
+      "###############",
+      "#D..m.#...b.U.#",
+      "#.###.#.###B#.#",
+      "#...#...#H..#.#",
+      "#Y#.#####.###.#",
+      "#t#...$...#d#.#",
+      "#.###.###.#.#.#",
+      "#..y#.#...#.#.#",
+      "###.#.#.###.#.#",
+      "#r..#...k...#.#",
+      "#.#####.#####.#",
+      "#...h...#...n.#",
+      "#.#.###.#.###.#",
+      "#...s..Y..m.e.#",
+      "###############",
+    ],
+  },
+  {
+    id: "floor-3",
+    title: "3F Crystal Crown",
+    objective: "Break the warden's seal and rescue the princess.",
+    raw: [
+      "###############",
+      "#D..H.#..X.RC.#",
+      "#.###.#.###R#.#",
+      "#...#...#n..#.#",
+      "#Y#.#####.###.#",
+      "#m#...d...#h#.#",
+      "#.###.###.#.#.#",
+      "#..r#.#...#.#.#",
+      "###.#.#.###.#.#",
+      "#e..#...k...#.#",
+      "#.#####.#####.#",
+      "#...b...#...n.#",
+      "#.#.###.#.###.#",
+      "#...t..B..m.y.#",
+      "###############",
+    ],
+  },
 ];
 
 const INITIAL_HERO: HeroStats = {
-  hp: 430,
-  maxHp: 430,
-  atk: 36,
-  def: 13,
+  hp: 540,
+  maxHp: 540,
+  atk: 38,
+  def: 16,
   gold: 0,
   yellowKeys: 1,
   blueKeys: 0,
   redKeys: 0,
 };
 
-export function createInitialLevel(prompt = "Rescue the princess from the tower that answers wishes."): LevelState {
+export function createInitialTower(prompt = "Rescue the princess from the tower that answers wishes."): TowerState {
+  const floors = FLOORS.map(createFloor);
+  const start = floors[0].start ?? { x: 1, y: 13 };
+
+  return {
+    title: "OnePromptDungeon",
+    prompt,
+    seed: "v0.2-handcrafted-3f",
+    floors,
+    currentFloorIndex: 0,
+    hero: { ...INITIAL_HERO },
+    player: { ...start },
+    moves: 0,
+    bossDefeated: false,
+    won: false,
+    lost: false,
+    log: [
+      "The old tower accepts your wish and locks the crown room.",
+      "Route carefully. Every key, fight, and shop visit matters.",
+    ],
+    history: [],
+  };
+}
+
+function createFloor(definition: FloorDefinition): FloorState {
   const tiles: TileKind[][] = [];
   const contents: CellContent[][] = [];
-  let player = { x: 1, y: 13 };
+  let start: Position | undefined;
+  let stairsUp: Position | undefined;
+  let stairsDown: Position | undefined;
 
-  RAW_LEVEL.forEach((row, y) => {
+  definition.raw.forEach((row, y) => {
     const tileRow: TileKind[] = [];
     const contentRow: CellContent[] = [];
 
@@ -42,8 +126,15 @@ export function createInitialLevel(prompt = "Rescue the princess from the tower 
       const parsed = parseCell(char);
       tileRow.push(parsed.tile);
       contentRow.push(parsed.content);
+
       if (char === "P") {
-        player = { x, y };
+        start = { x, y };
+      }
+      if (char === "U") {
+        stairsUp = { x, y };
+      }
+      if (char === "D") {
+        stairsDown = { x, y };
       }
     });
 
@@ -52,22 +143,16 @@ export function createInitialLevel(prompt = "Rescue the princess from the tower 
   });
 
   return {
-    title: "The Whispering Tower",
-    prompt,
-    width: RAW_LEVEL[0].length,
-    height: RAW_LEVEL.length,
+    id: definition.id,
+    title: definition.title,
+    objective: definition.objective,
+    width: definition.raw[0].length,
+    height: definition.raw.length,
     tiles,
     contents,
-    hero: { ...INITIAL_HERO },
-    player,
-    moves: 0,
-    bossDefeated: false,
-    won: false,
-    lost: false,
-    log: [
-      "The tower folds your wish into stone.",
-      "Find keys, choose battles, and break the seal near the princess.",
-    ],
+    start,
+    stairsUp,
+    stairsDown,
   };
 }
 
@@ -105,9 +190,21 @@ function parseCell(char: string): { tile: TileKind; content: CellContent } {
       return { tile: "floor", content: { type: "item", item: "yellowKey" } };
     case "b":
       return { tile: "floor", content: { type: "item", item: "blueKey" } };
+    case "e":
+      return { tile: "floor", content: { type: "item", item: "redKey" } };
+    case "U":
+      return { tile: "floor", content: { type: "stairsUp" } };
+    case "D":
+      return { tile: "floor", content: { type: "stairsDown" } };
+    case "$":
+      return { tile: "floor", content: { type: "shop" } };
     case "C":
       return { tile: "floor", content: { type: "princess" } };
     default:
       return { tile: "floor", content: { type: "empty" } };
   }
+}
+
+export function getCurrentFloor(tower: TowerState) {
+  return tower.floors[tower.currentFloorIndex];
 }

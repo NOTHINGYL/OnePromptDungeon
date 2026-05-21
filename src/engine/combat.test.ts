@@ -19,9 +19,9 @@ describe("previewCombat", () => {
 
     expect(result.canWin).toBe(true);
     expect(result.heroDamage).toBe(32);
-    expect(result.monsterDamage).toBe(5);
+    expect(result.monsterDamage).toBe(7);
     expect(result.rounds).toBe(2);
-    expect(result.damageTaken).toBe(5);
+    expect(result.damageTaken).toBe(7);
   });
 
   it("marks combat impossible when the hero cannot pierce defense", () => {

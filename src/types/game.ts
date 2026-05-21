@@ -53,15 +53,27 @@ export type CellContent =
   | { type: "empty" }
   | { type: "item"; item: ItemKind }
   | { type: "monster"; monster: MonsterKind }
+  | { type: "stairsUp" }
+  | { type: "stairsDown" }
+  | { type: "shop" }
   | { type: "princess" };
 
-export type LevelState = {
+export type FloorState = {
+  id: string;
   title: string;
-  prompt: string;
+  objective: string;
   width: number;
   height: number;
   tiles: TileKind[][];
   contents: CellContent[][];
+  start?: Position;
+  stairsUp?: Position;
+  stairsDown?: Position;
+};
+
+export type TowerSnapshot = {
+  floors: FloorState[];
+  currentFloorIndex: number;
   hero: HeroStats;
   player: Position;
   moves: number;
@@ -70,3 +82,12 @@ export type LevelState = {
   lost: boolean;
   log: string[];
 };
+
+export type TowerState = TowerSnapshot & {
+  title: string;
+  prompt: string;
+  seed: string;
+  history: TowerSnapshot[];
+};
+
+export type ShopUpgrade = "atk" | "def" | "hp";

@@ -1,22 +1,44 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MONSTERS } from "./data/catalog";
+import { MONSTERS, SHOP_COST, SHOP_UPGRADES } from "./data/catalog";
 import { previewCombat } from "./engine/combat";
-import { moveHero, type Direction } from "./engine/game";
-import { createInitialLevel } from "./engine/level";
+import { buyUpgrade, isPlayerOnShop, moveHero, undo, type Direction } from "./engine/game";
+import { createInitialTower, getCurrentFloor } from "./engine/level";
 import { GameCanvas } from "./ui/GameCanvas";
+import type { ShopUpgrade, TowerState } from "./types/game";
 
 const EXAMPLE_PROMPTS = [
-  "Rescue the princess from a tower that reshapes itself around old wishes.",
-  "Build a moonlit dungeon where every door asks for a cleaner route.",
-  "Make a royal rescue inside a quiet machine temple beneath the city.",
+  "Rescue the princess from a three-floor tower that answers wishes.",
+  "Raise an old stone tower with locked doors, merchants, and a crystal crown.",
+  "Make a compact Magic Tower route where every key and coin matters.",
 ];
 
 export default function App() {
   const [prompt, setPrompt] = useState(EXAMPLE_PROMPTS[0]);
-  const [level, setLevel] = useState(() => createInitialLevel(EXAMPLE_PROMPTS[0]));
+  const [tower, setTower] = useState<TowerState>(() => createInitialTower(EXAMPLE_PROMPTS[0]));
+
+  const floor = getCurrentFloor(tower);
+  const onShop = isPlayerOnShop(tower);
 
   const move = useCallback((direction: Direction) => {
-    setLevel((current) => moveHero(current, direction));
+    setTower((current) => moveHero(current, direction));
+  }, []);
+
+  const restart = () => {
+    setTower(createInitialTower(prompt));
+  };
+
+  const randomPrompt = () => {
+    const nextPrompt = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
+    setPrompt(nextPrompt);
+    setTower(createInitialTower(nextPrompt));
+  };
+
+  const buy = (upgrade: ShopUpgrade) => {
+    setTower((current) => buyUpgrade(current, upgrade));
+  };
+
+  const undoStep = useCallback(() => {
+    setTower((current) => undo(current));
   }, []);
 
   useEffect(() => {
@@ -36,6 +58,12 @@ export default function App() {
         D: "right",
       };
 
+      if (event.key === "z" || event.key === "Z") {
+        event.preventDefault();
+        undoStep();
+        return;
+      }
+
       const direction = keyMap[event.key];
       if (direction) {
         event.preventDefault();
@@ -45,134 +73,141 @@ export default function App() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [move]);
+  }, [move, undoStep]);
 
   const nearbyMonster = useMemo(() => {
     const candidates = [
-      { x: level.player.x, y: level.player.y - 1 },
-      { x: level.player.x + 1, y: level.player.y },
-      { x: level.player.x, y: level.player.y + 1 },
-      { x: level.player.x - 1, y: level.player.y },
+      { x: tower.player.x, y: tower.player.y - 1 },
+      { x: tower.player.x + 1, y: tower.player.y },
+      { x: tower.player.x, y: tower.player.y + 1 },
+      { x: tower.player.x - 1, y: tower.player.y },
     ];
 
     for (const pos of candidates) {
-      if (pos.x < 0 || pos.y < 0 || pos.x >= level.width || pos.y >= level.height) {
+      if (pos.x < 0 || pos.y < 0 || pos.x >= floor.width || pos.y >= floor.height) {
         continue;
       }
-      const content = level.contents[pos.y][pos.x];
+      const content = floor.contents[pos.y][pos.x];
       if (content.type === "monster") {
         return {
           monster: MONSTERS[content.monster],
-          preview: previewCombat(level.hero, content.monster),
+          preview: previewCombat(tower.hero, content.monster),
         };
       }
     }
 
     return null;
-  }, [level]);
-
-  const startTower = () => {
-    setLevel(createInitialLevel(prompt));
-  };
-
-  const randomPrompt = () => {
-    const nextPrompt = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
-    setPrompt(nextPrompt);
-    setLevel(createInitialLevel(nextPrompt));
-  };
+  }, [floor, tower.hero, tower.player]);
 
   return (
     <main className="app-shell">
-      <section className="command-panel" aria-label="Dungeon command panel">
-        <div className="brand-block">
-          <p className="eyebrow">v0.1 / Magic Tower-like prototype</p>
+      <aside className="left-hud" aria-label="Hero status">
+        <header className="brand-block">
+          <p className="eyebrow">v0.2 / Three-floor tower</p>
           <h1>OnePromptDungeon</h1>
-          <p className="intro">
-            A compact deterministic tower RPG: open doors, route around danger, break the warden's seal, and rescue the princess.
-          </p>
-        </div>
+          <p>{tower.seed}</p>
+        </header>
 
-        <div className="prompt-box">
-          <label htmlFor="prompt">Dungeon wish</label>
-          <textarea id="prompt" value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={4} />
+        <section className="hero-panel">
+          <h2>Hero</h2>
+          <div className="stats-grid">
+            <Stat label="HP" value={`${tower.hero.hp}/${tower.hero.maxHp}`} tone="hp" />
+            <Stat label="ATK" value={tower.hero.atk} tone="atk" />
+            <Stat label="DEF" value={tower.hero.def} tone="def" />
+            <Stat label="Gold" value={tower.hero.gold} tone="gold" />
+          </div>
+        </section>
+
+        <section className="key-panel">
+          <h2>Keys</h2>
+          <div className="key-row">
+            <Key label="Yellow" value={tower.hero.yellowKeys} tone="yellow" />
+            <Key label="Blue" value={tower.hero.blueKeys} tone="blue" />
+            <Key label="Red" value={tower.hero.redKeys} tone="red" />
+          </div>
+        </section>
+
+        <section className="wish-panel">
+          <label htmlFor="prompt">Tower wish</label>
+          <textarea id="prompt" value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={3} />
           <div className="prompt-actions">
-            <button className="primary" type="button" onClick={startTower}>
-              Begin Tower
+            <button className="primary" type="button" onClick={restart}>
+              Restart
             </button>
             <button type="button" onClick={randomPrompt}>
-              Random Wish
+              New Wish
             </button>
           </div>
-          <p className="fineprint">v0.1 uses a hand-built level. v0.2 will turn this prompt into generated maps.</p>
-        </div>
+        </section>
+      </aside>
 
-        <div className="stats-grid">
-          <Stat label="HP" value={`${level.hero.hp}/${level.hero.maxHp}`} />
-          <Stat label="ATK" value={level.hero.atk} />
-          <Stat label="DEF" value={level.hero.def} />
-          <Stat label="Gold" value={level.hero.gold} />
-          <Stat label="Sun Keys" value={level.hero.yellowKeys} />
-          <Stat label="Moon Keys" value={level.hero.blueKeys} />
-          <Stat label="Moves" value={level.moves} />
-          <Stat label="Seal" value={level.bossDefeated ? "Broken" : "Locked"} />
-        </div>
-
-        <div className="controls" aria-label="Movement controls">
-          <button type="button" onClick={() => move("up")}>↑</button>
+      <section className="tower-stage" aria-label="Game board">
+        <div className="stage-topbar">
           <div>
+            <p className="eyebrow">Floor {tower.currentFloorIndex + 1} / {tower.floors.length}</p>
+            <h2>{floor.title}</h2>
+          </div>
+          <p>{floor.objective}</p>
+        </div>
+
+        <GameCanvas floor={floor} tower={tower} />
+
+        <div className="bottom-hud">
+          <div className="moves-panel">
+            <span>Moves</span>
+            <strong>{tower.moves}</strong>
+          </div>
+          <div className="controls" aria-label="Movement controls">
+            <button type="button" onClick={() => move("up")}>↑</button>
             <button type="button" onClick={() => move("left")}>←</button>
             <button type="button" onClick={() => move("down")}>↓</button>
             <button type="button" onClick={() => move("right")}>→</button>
           </div>
-        </div>
-      </section>
-
-      <section className="game-stage" aria-label="Game board">
-        <div className="stage-header">
-          <div>
-            <p className="eyebrow">Floor 1</p>
-            <h2>{level.title}</h2>
-          </div>
-          <button type="button" onClick={() => setLevel(createInitialLevel(prompt))}>
-            Restart
+          <button className="undo-button" type="button" onClick={undoStep} disabled={tower.history.length === 0}>
+            Undo Z
           </button>
         </div>
-        <GameCanvas level={level} />
       </section>
 
-      <aside className="side-panel" aria-label="Quest details">
-        <section className="quest-card">
-          <p className="eyebrow">Current Quest</p>
-          <h2>Break the crystal seal</h2>
-          <p>
-            The princess is visible near the tower crown, but the warden binds the final room. Build enough ATK and DEF before choosing that fight.
-          </p>
-        </section>
-
-        <section className="combat-card">
+      <aside className="right-hud" aria-label="Tower details">
+        <section className="fight-panel">
           <p className="eyebrow">Adjacent Fight</p>
           {nearbyMonster ? (
             <>
-              <h3>{nearbyMonster.monster.name}</h3>
-              <div className="combat-stats">
+              <h2>{nearbyMonster.monster.name}</h2>
+              <div className="monster-statline">
                 <span>HP {nearbyMonster.monster.hp}</span>
                 <span>ATK {nearbyMonster.monster.atk}</span>
                 <span>DEF {nearbyMonster.monster.def}</span>
+                <span>Gold {nearbyMonster.monster.gold}</span>
               </div>
               <p className={nearbyMonster.preview.canWin ? "good" : "danger"}>
-                {nearbyMonster.preview.canWin ? "Winnable" : "Too dangerous"} / expected loss{" "}
+                {nearbyMonster.preview.canWin ? "Can win" : "Do not fight"} / loss{" "}
                 {Number.isFinite(nearbyMonster.preview.damageTaken) ? nearbyMonster.preview.damageTaken : "∞"} HP
               </p>
             </>
           ) : (
-            <p>No monster is adjacent. Move with WASD or arrow keys.</p>
+            <p>No monster beside you. Use WASD, arrows, or the controls below.</p>
           )}
         </section>
 
-        <section className="log-card">
+        <section className={onShop ? "shop-panel active" : "shop-panel"}>
+          <p className="eyebrow">Merchant</p>
+          <h2>20 gold each</h2>
+          <div className="shop-actions">
+            {(Object.keys(SHOP_UPGRADES) as ShopUpgrade[]).map((upgrade) => (
+              <button key={upgrade} type="button" onClick={() => buy(upgrade)} disabled={!onShop || tower.hero.gold < SHOP_COST}>
+                <strong>{SHOP_UPGRADES[upgrade].label}</strong>
+                <span>{SHOP_UPGRADES[upgrade].description}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="log-panel">
           <p className="eyebrow">Tower Log</p>
           <ul>
-            {level.log.map((entry, index) => (
+            {tower.log.map((entry, index) => (
               <li key={`${entry}-${index}`}>{entry}</li>
             ))}
           </ul>
@@ -182,9 +217,18 @@ export default function App() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Stat({ label, value, tone }: { label: string; value: string | number; tone: string }) {
   return (
-    <div className="stat">
+    <div className={`stat ${tone}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function Key({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className={`key ${tone}`}>
       <span>{label}</span>
       <strong>{value}</strong>
     </div>

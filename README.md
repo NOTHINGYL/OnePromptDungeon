@@ -2,17 +2,17 @@
 
 OnePromptDungeon is a browser-playable, Magic Tower-like dungeon game designed for GitHub Pages.
 
-The v0.1 release is a polished fixed-level prototype: choose routes, collect keys, open doors, predict deterministic combat, defeat the Tower Warden, and rescue the princess. The long-term direction is prompt-generated dungeon creation with no required backend and optional bring-your-own-key AI mode.
+v0.2 turns the first prototype into a compact three-floor tower: route through doors, manage keys, fight deterministic battles, climb floors, spend gold at the merchant, undo mistakes, defeat the Crystal Warden, and rescue the princess.
 
 ## Play
 
-GitHub Pages deployment is included through `.github/workflows/deploy.yml`.
-
-After the first push to `main`, enable Pages for GitHub Actions in repository settings and use:
+Online build:
 
 ```txt
 https://nothingyl.github.io/OnePromptDungeon/
 ```
+
+No login, backend, or API key is required.
 
 ## Run Locally
 
@@ -23,7 +23,7 @@ npm install
 npm run dev
 ```
 
-Build the static site:
+Build the static GitHub Pages site:
 
 ```bash
 npm run build
@@ -35,30 +35,37 @@ Run tests:
 npm test
 ```
 
-## What v0.1 Includes
+## Controls
 
-- Vite + React + TypeScript frontend
-- Canvas-rendered 15x15 dungeon board
-- Magic Tower-style deterministic combat
-- Movement through WASD, arrow keys, and on-screen controls
-- Yellow and blue doors with matching keys
-- Potions, gems, monsters, boss fight, and rescue objective
-- Adjacent fight preview with expected HP loss
-- Modern responsive UI for desktop and mobile
-- GitHub Pages workflow
-- Version notes and roadmap docs
+- Move: `WASD`, arrow keys, or on-screen arrow buttons
+- Undo: `Z` or the `Undo` button
+- Shop: stand on the merchant tile and buy ATK, DEF, or HP upgrades
+- Goal: climb to 3F, defeat the Crystal Warden, and rescue the princess
 
-## Game Concept
+## What v0.2 Includes
 
-The tower listens to wishes. A single prompt becomes the shape of a dungeon, and the player enters that dungeon as a route-planning RPG challenge.
+- Three handcrafted 15x15 floors
+- Persistent floor state when moving up and down stairs
+- Deterministic Magic Tower-style combat preview
+- Yellow, blue, and red doors with matching keys
+- Potions, gems, monsters, boss, princess, stairs, and merchant
+- Shop upgrades: `20 gold` for `+12 ATK`, `+12 DEF`, or `+250 HP`
+- Undo history for the last 30 meaningful actions
+- Full-screen retro-modern game HUD with desktop no-scroll layout
+- Canvas-rendered original pixel-style visuals
+- GitHub Pages deployment workflow
 
-The current prototype uses a handcrafted level named **The Whispering Tower**. The prompt box is already present as the future entry point, but v0.1 intentionally keeps the map fixed so the combat loop and UI can be tested first.
+## Design Direction
+
+The project is inspired by deterministic tower RPGs: the fun comes from route planning, not random combat. Every enemy has predictable damage, every key matters, and every shop purchase changes which fights become possible.
+
+The prompt box remains as the future "one prompt" entry point, but v0.2 intentionally focuses on making the base game feel good before generated levels arrive.
 
 ## Roadmap
 
-- v0.1: Fixed playable Magic Tower-like prototype
-- v0.2: Local prompt parser, seed-based map generation, JSON export
-- v0.3: Multi-floor tower, undo, shops, solvability checks
+- v0.1: Fixed one-floor playable prototype
+- v0.2: Three-floor polished Magic Tower-like experience
+- v0.3: Local prompt parser, seed-based map generation, JSON export/import
 - v0.4: Optional AI mode for story/theme/level JSON generation
 
 More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
@@ -67,18 +74,14 @@ More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ```txt
 src/
-  data/       Item and monster catalog
-  engine/     Combat, movement, and fixed level state
+  data/       Item, monster, and shop catalog
+  engine/     Combat, tower movement, shops, undo, and handcrafted floors
   types/      Shared game types
   ui/         Canvas board renderer
-  App.tsx     Main application shell
+  App.tsx     Game HUD and controls
 docs/
   CHANGELOG.md
   ROADMAP.md
 ```
 
-## Design Notes
-
-This project is inspired by deterministic tower RPGs: the important question is not whether random combat goes well, but whether the player chose the right route before spending health and keys.
-
-Original assets are drawn in Canvas. No classic Magic Tower art, maps, names, or copyrighted materials are copied.
+Original visuals are drawn in Canvas. No classic Magic Tower art, maps, names, or copyrighted materials are copied.
