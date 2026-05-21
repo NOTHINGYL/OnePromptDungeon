@@ -3,8 +3,15 @@ import { MONSTERS, SHOP_COST, SHOP_UPGRADES } from "./data/catalog";
 import { previewCombat } from "./engine/combat";
 import { buyUpgrade, isPlayerOnShop, moveHero, undo, type Direction } from "./engine/game";
 import { createInitialTower, getCurrentFloor } from "./engine/level";
-import { GameCanvas } from "./ui/GameCanvas";
-import type { ShopUpgrade, TowerState } from "./types/game";
+import {
+  detectLanguage,
+  LANG_STORAGE_KEY,
+  THEME_STORAGE_KEY,
+  translate,
+  type Language,
+} from "./i18n";
+import { GameCanvas, type TowerTheme } from "./ui/GameCanvas";
+import type { LogEntry, ShopUpgrade, TowerState } from "./types/game";
 
 const EXAMPLE_PROMPTS = [
   "Rescue the princess from a three-floor tower that answers wishes.",
@@ -12,12 +19,34 @@ const EXAMPLE_PROMPTS = [
   "Make a compact Magic Tower route where every key and coin matters.",
 ];
 
+function getInitialLanguage(): Language {
+  const saved = localStorage.getItem(LANG_STORAGE_KEY);
+  return saved === "zh" || saved === "en" ? saved : detectLanguage();
+}
+
+function getInitialTheme(): TowerTheme {
+  const saved = localStorage.getItem(THEME_STORAGE_KEY);
+  return saved === "classic-dark" || saved === "classic-light" ? saved : "classic-light";
+}
+
 export default function App() {
+  const [language, setLanguage] = useState<Language>(getInitialLanguage);
+  const [theme, setTheme] = useState<TowerTheme>(getInitialTheme);
   const [prompt, setPrompt] = useState(EXAMPLE_PROMPTS[0]);
   const [tower, setTower] = useState<TowerState>(() => createInitialTower(EXAMPLE_PROMPTS[0]));
 
   const floor = getCurrentFloor(tower);
   const onShop = isPlayerOnShop(tower);
+  const t = useCallback((key: string, params?: Record<string, string | number>) => translate(language, key, params), [language]);
+
+  useEffect(() => {
+    localStorage.setItem(LANG_STORAGE_KEY, language);
+  }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   const move = useCallback((direction: Direction) => {
     setTower((current) => moveHero(current, direction));
@@ -99,136 +128,133 @@ export default function App() {
     return null;
   }, [floor, tower.hero, tower.player]);
 
+  const toggleLanguage = () => {
+    setLanguage((current) => (current === "zh" ? "en" : "zh"));
+  };
+
+  const toggleTheme = () => {
+    setTheme((current) => (current === "classic-light" ? "classic-dark" : "classic-light"));
+  };
+
   return (
-    <main className="app-shell">
-      <aside className="left-hud" aria-label="Hero status">
-        <header className="brand-block">
-          <p className="eyebrow">v0.2 / Three-floor tower</p>
-          <h1>OnePromptDungeon</h1>
-          <p>{tower.seed}</p>
+    <main className="app-shell" data-theme={theme}>
+      <section className="game-window" aria-label="OnePromptDungeon">
+        <header className="window-titlebar">
+          <div className="window-title">
+            <span className="title-gem" />
+            <strong>{t("app.title")}</strong>
+          </div>
+          <div className="window-actions">
+            <button type="button" onClick={toggleLanguage}>{t("button.language")}</button>
+            <button type="button" onClick={toggleTheme}>{t("button.theme")}</button>
+            <button type="button" onClick={restart}>{t("button.restart")}</button>
+            <button type="button" onClick={undoStep} disabled={tower.history.length === 0}>{t("button.undo")}</button>
+          </div>
         </header>
 
-        <section className="hero-panel">
-          <h2>Hero</h2>
-          <div className="stats-grid">
-            <Stat label="HP" value={`${tower.hero.hp}/${tower.hero.maxHp}`} tone="hp" />
-            <Stat label="ATK" value={tower.hero.atk} tone="atk" />
-            <Stat label="DEF" value={tower.hero.def} tone="def" />
-            <Stat label="Gold" value={tower.hero.gold} tone="gold" />
-          </div>
-        </section>
+        <div className="classic-layout">
+          <aside className="status-board" aria-label={t("status.hero")}>
+            <p className="version-text">{t("app.version")}</p>
+            <div className="hero-mark" aria-hidden="true">
+              <span />
+            </div>
+            <StatLine label={t("status.floor")} value={tower.currentFloorIndex + 1} />
+            <StatLine label={t("status.level")} value={1} />
+            <StatLine label={t("status.hp")} value={tower.hero.hp} />
+            <StatLine label={t("status.atk")} value={tower.hero.atk} />
+            <StatLine label={t("status.def")} value={tower.hero.def} />
+            <StatLine label={t("status.gold")} value={tower.hero.gold} />
 
-        <section className="key-panel">
-          <h2>Keys</h2>
-          <div className="key-row">
-            <Key label="Yellow" value={tower.hero.yellowKeys} tone="yellow" />
-            <Key label="Blue" value={tower.hero.blueKeys} tone="blue" />
-            <Key label="Red" value={tower.hero.redKeys} tone="red" />
-          </div>
-        </section>
+            <div className="key-list">
+              <KeyLine color="yellow" label={t("status.yellowKey")} value={tower.hero.yellowKeys} />
+              <KeyLine color="blue" label={t("status.blueKey")} value={tower.hero.blueKeys} />
+              <KeyLine color="red" label={t("status.redKey")} value={tower.hero.redKeys} />
+            </div>
 
-        <section className="wish-panel">
-          <label htmlFor="prompt">Tower wish</label>
-          <textarea id="prompt" value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={3} />
-          <div className="prompt-actions">
-            <button className="primary" type="button" onClick={restart}>
-              Restart
-            </button>
-            <button type="button" onClick={randomPrompt}>
-              New Wish
-            </button>
-          </div>
-        </section>
-      </aside>
+            <div className="wish-panel">
+              <label htmlFor="prompt">{t("wish.label")}</label>
+              <textarea id="prompt" value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={3} />
+              <button type="button" onClick={randomPrompt}>{t("button.shuffle")}</button>
+            </div>
+          </aside>
 
-      <section className="tower-stage" aria-label="Game board">
-        <div className="stage-topbar">
-          <div>
-            <p className="eyebrow">Floor {tower.currentFloorIndex + 1} / {tower.floors.length}</p>
-            <h2>{floor.title}</h2>
-          </div>
-          <p>{floor.objective}</p>
+          <section className="map-board" aria-label="Game board">
+            <div className="floor-strip">
+              <strong>{t(floor.title)}</strong>
+              <span>{t(floor.objective)}</span>
+            </div>
+            <GameCanvas floor={floor} language={language} theme={theme} tower={tower} />
+          </section>
         </div>
 
-        <GameCanvas floor={floor} tower={tower} />
-
-        <div className="bottom-hud">
-          <div className="moves-panel">
-            <span>Moves</span>
-            <strong>{tower.moves}</strong>
-          </div>
-          <div className="controls" aria-label="Movement controls">
-            <button type="button" onClick={() => move("up")}>↑</button>
-            <button type="button" onClick={() => move("left")}>←</button>
-            <button type="button" onClick={() => move("down")}>↓</button>
-            <button type="button" onClick={() => move("right")}>→</button>
-          </div>
-          <button className="undo-button" type="button" onClick={undoStep} disabled={tower.history.length === 0}>
-            Undo Z
-          </button>
-        </div>
-      </section>
-
-      <aside className="right-hud" aria-label="Tower details">
-        <section className="fight-panel">
-          <p className="eyebrow">Adjacent Fight</p>
-          {nearbyMonster ? (
-            <>
-              <h2>{nearbyMonster.monster.name}</h2>
-              <div className="monster-statline">
-                <span>HP {nearbyMonster.monster.hp}</span>
-                <span>ATK {nearbyMonster.monster.atk}</span>
-                <span>DEF {nearbyMonster.monster.def}</span>
-                <span>Gold {nearbyMonster.monster.gold}</span>
+        <footer className="bottom-panel">
+          <section className="forecast-panel">
+            <p>{t("fight.title")}</p>
+            {nearbyMonster ? (
+              <div>
+                <strong>{t(nearbyMonster.monster.name)}</strong>
+                <span>
+                  {nearbyMonster.preview.canWin ? t("fight.canWin") : t("fight.danger")} / {t("fight.loss")}{" "}
+                  {Number.isFinite(nearbyMonster.preview.damageTaken) ? nearbyMonster.preview.damageTaken : "∞"} /{" "}
+                  {t("fight.reward")} {nearbyMonster.monster.gold}
+                </span>
               </div>
-              <p className={nearbyMonster.preview.canWin ? "good" : "danger"}>
-                {nearbyMonster.preview.canWin ? "Can win" : "Do not fight"} / loss{" "}
-                {Number.isFinite(nearbyMonster.preview.damageTaken) ? nearbyMonster.preview.damageTaken : "∞"} HP
-              </p>
-            </>
-          ) : (
-            <p>No monster beside you. Use WASD, arrows, or the controls below.</p>
-          )}
-        </section>
+            ) : (
+              <span>{t("fight.none")} {t("controls.hint")}</span>
+            )}
+          </section>
 
-        <section className={onShop ? "shop-panel active" : "shop-panel"}>
-          <p className="eyebrow">Merchant</p>
-          <h2>20 gold each</h2>
-          <div className="shop-actions">
-            {(Object.keys(SHOP_UPGRADES) as ShopUpgrade[]).map((upgrade) => (
-              <button key={upgrade} type="button" onClick={() => buy(upgrade)} disabled={!onShop || tower.hero.gold < SHOP_COST}>
-                <strong>{SHOP_UPGRADES[upgrade].label}</strong>
-                <span>{SHOP_UPGRADES[upgrade].description}</span>
-              </button>
-            ))}
-          </div>
-        </section>
+          <section className={onShop ? "merchant-panel active" : "merchant-panel"}>
+            <p>{t("shop.title")} · {t("shop.cost")}</p>
+            <div>
+              {(Object.keys(SHOP_UPGRADES) as ShopUpgrade[]).map((upgrade) => (
+                <button key={upgrade} type="button" onClick={() => buy(upgrade)} disabled={!onShop || tower.hero.gold < SHOP_COST}>
+                  {t(`shop.${upgrade}.label`)}
+                </button>
+              ))}
+            </div>
+          </section>
 
-        <section className="log-panel">
-          <p className="eyebrow">Tower Log</p>
-          <ul>
-            {tower.log.map((entry, index) => (
-              <li key={`${entry}-${index}`}>{entry}</li>
-            ))}
-          </ul>
-        </section>
-      </aside>
+          <section className="log-panel">
+            <p>{t("log.title")}</p>
+            <ul>
+              {tower.log.slice(0, 3).map((entry, index) => (
+                <li key={`${entry.key}-${index}`}>{formatLog(entry, t)}</li>
+              ))}
+            </ul>
+          </section>
+        </footer>
+      </section>
     </main>
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string | number; tone: string }) {
+function formatLog(entry: LogEntry, t: (key: string, params?: Record<string, string | number>) => string) {
+  const params = Object.fromEntries(
+    Object.entries(entry.params ?? {}).map(([key, value]) => {
+      if (typeof value === "string" && (value.startsWith("monster.") || value.startsWith("item.") || value.startsWith("floor."))) {
+        return [key, t(value)];
+      }
+      return [key, value];
+    }),
+  );
+
+  return t(entry.key, params);
+}
+
+function StatLine({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className={`stat ${tone}`}>
+    <div className="stat-line">
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
   );
 }
 
-function Key({ label, value, tone }: { label: string; value: number; tone: string }) {
+function KeyLine({ color, label, value }: { color: "yellow" | "blue" | "red"; label: string; value: number }) {
   return (
-    <div className={`key ${tone}`}>
+    <div className="key-line">
+      <i className={`key-dot ${color}`} />
       <span>{label}</span>
       <strong>{value}</strong>
     </div>

@@ -3,45 +3,45 @@ import type { Item, ItemKind, Monster, MonsterKind, ShopUpgrade } from "../types
 export const ITEMS: Record<ItemKind, Item> = {
   smallPotion: {
     kind: "smallPotion",
-    name: "Red Potion",
-    description: "+160 HP",
+    name: "item.smallPotion.name",
+    description: "item.smallPotion.description",
   },
   largePotion: {
     kind: "largePotion",
-    name: "Royal Potion",
-    description: "+300 HP",
+    name: "item.largePotion.name",
+    description: "item.largePotion.description",
   },
   redGem: {
     kind: "redGem",
-    name: "Ruby",
-    description: "+6 ATK",
+    name: "item.redGem.name",
+    description: "item.redGem.description",
   },
   blueGem: {
     kind: "blueGem",
-    name: "Sapphire",
-    description: "+6 DEF",
+    name: "item.blueGem.name",
+    description: "item.blueGem.description",
   },
   yellowKey: {
     kind: "yellowKey",
-    name: "Yellow Key",
-    description: "Opens yellow doors",
+    name: "item.yellowKey.name",
+    description: "item.yellowKey.description",
   },
   blueKey: {
     kind: "blueKey",
-    name: "Blue Key",
-    description: "Opens blue doors",
+    name: "item.blueKey.name",
+    description: "item.blueKey.description",
   },
   redKey: {
     kind: "redKey",
-    name: "Red Key",
-    description: "Opens red doors",
+    name: "item.redKey.name",
+    description: "item.redKey.description",
   },
 };
 
 export const MONSTERS: Record<MonsterKind, Monster> = {
   greenSlime: {
     kind: "greenSlime",
-    name: "Green Slime",
+    name: "monster.greenSlime",
     hp: 44,
     atk: 20,
     def: 4,
@@ -49,7 +49,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
   },
   nightBat: {
     kind: "nightBat",
-    name: "Night Bat",
+    name: "monster.nightBat",
     hp: 72,
     atk: 30,
     def: 8,
@@ -57,7 +57,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
   },
   boneGuard: {
     kind: "boneGuard",
-    name: "Bone Guard",
+    name: "monster.boneGuard",
     hp: 108,
     atk: 42,
     def: 14,
@@ -65,7 +65,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
   },
   runeMage: {
     kind: "runeMage",
-    name: "Rune Mage",
+    name: "monster.runeMage",
     hp: 126,
     atk: 52,
     def: 8,
@@ -73,7 +73,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
   },
   ironKnight: {
     kind: "ironKnight",
-    name: "Iron Knight",
+    name: "monster.ironKnight",
     hp: 190,
     atk: 70,
     def: 24,
@@ -81,7 +81,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
   },
   towerWarden: {
     kind: "towerWarden",
-    name: "Crystal Warden",
+    name: "monster.towerWarden",
     hp: 360,
     atk: 92,
     def: 36,

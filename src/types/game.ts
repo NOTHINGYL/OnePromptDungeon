@@ -58,6 +58,11 @@ export type CellContent =
   | { type: "shop" }
   | { type: "princess" };
 
+export type LogEntry = {
+  key: string;
+  params?: Record<string, string | number>;
+};
+
 export type FloorState = {
   id: string;
   title: string;
@@ -80,7 +85,7 @@ export type TowerSnapshot = {
   bossDefeated: boolean;
   won: boolean;
   lost: boolean;
-  log: string[];
+  log: LogEntry[];
 };
 
 export type TowerState = TowerSnapshot & {

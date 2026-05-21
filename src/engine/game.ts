@@ -34,12 +34,12 @@ export function moveHero(tower: TowerState, direction: Direction): TowerState {
   const next = { x: tower.player.x + delta.x, y: tower.player.y + delta.y };
 
   if (!isInside(floor, next.x, next.y)) {
-    return withLog(tower, "The outer wall has no door.");
+    return withLog(tower, "log.outerWall");
   }
 
   const tile = floor.tiles[next.y][next.x];
   if (tile === "wall") {
-    return withLog(tower, "Stone blocks the route.");
+    return withLog(tower, "log.wall");
   }
 
   const doorResult = tryOpenDoor(tower.hero, tile);
@@ -63,7 +63,7 @@ export function moveHero(tower: TowerState, direction: Direction): TowerState {
     const monster = MONSTERS[content.monster];
 
     if (!preview.canWin) {
-      return withLog(tower, `${monster.name} is too strong. Expected loss: ${formatLoss(preview.damageTaken)} HP.`);
+      return withLog(tower, "log.monsterTooStrong", { monster: monster.name, loss: formatLoss(preview.damageTaken) });
     }
 
     nextTower.hero.hp -= preview.damageTaken;
@@ -72,48 +72,51 @@ export function moveHero(tower: TowerState, direction: Direction): TowerState {
     if (monster.boss) {
       nextTower.bossDefeated = true;
     }
-    pushLog(nextTower, `Defeated ${monster.name}. Lost ${preview.damageTaken} HP, gained ${monster.gold} gold.`);
+    pushLog(nextTower, "log.defeated", { monster: monster.name, loss: preview.damageTaken, gold: monster.gold });
   }
 
   const afterCombatContent = activeFloor.contents[next.y][next.x];
   if (afterCombatContent.type === "item") {
     applyItem(nextTower.hero, afterCombatContent.item);
     activeFloor.contents[next.y][next.x] = { type: "empty" };
-    pushLog(nextTower, `Claimed ${ITEMS[afterCombatContent.item].name}: ${ITEMS[afterCombatContent.item].description}.`);
+    pushLog(nextTower, "log.claimed", {
+      item: ITEMS[afterCombatContent.item].name,
+      description: ITEMS[afterCombatContent.item].description,
+    });
   }
 
   const finalContent = activeFloor.contents[next.y][next.x];
   if (finalContent.type === "stairsUp") {
     const climbed = climb(nextTower, "up");
     if (!climbed) {
-      return withLog(tower, "The upper stairs are sealed.");
+      return withLog(tower, "log.stairsUpBlocked");
     }
     nextTower.moves += 1;
-    pushLog(nextTower, `Climbed to ${getCurrentFloor(nextTower).title}.`);
+    pushLog(nextTower, "log.climbed", { floor: getCurrentFloor(nextTower).title });
     return nextTower;
   }
 
   if (finalContent.type === "stairsDown") {
     const descended = climb(nextTower, "down");
     if (!descended) {
-      return withLog(tower, "The lower stairs have vanished.");
+      return withLog(tower, "log.stairsDownBlocked");
     }
     nextTower.moves += 1;
-    pushLog(nextTower, `Returned to ${getCurrentFloor(nextTower).title}.`);
+    pushLog(nextTower, "log.descended", { floor: getCurrentFloor(nextTower).title });
     return nextTower;
   }
 
   if (finalContent.type === "shop") {
-    pushLog(nextTower, "The merchant offers power for 20 gold.");
+    pushLog(nextTower, "log.shopHere");
   }
 
   if (finalContent.type === "princess") {
     if (!nextTower.bossDefeated) {
-      return withLog(tower, "The princess remains sealed until the Crystal Warden falls.");
+      return withLog(tower, "log.princessSealed");
     }
 
     nextTower.won = true;
-    pushLog(nextTower, "The princess steps free. The tower opens to morning.");
+    pushLog(nextTower, "log.victory");
   }
 
   nextTower.player = next;
@@ -121,7 +124,7 @@ export function moveHero(tower: TowerState, direction: Direction): TowerState {
 
   if (nextTower.hero.hp <= 0) {
     nextTower.lost = true;
-    pushLog(nextTower, "The hero falls inside the tower.");
+    pushLog(nextTower, "log.fallen");
   }
 
   return nextTower;
@@ -136,11 +139,11 @@ export function buyUpgrade(tower: TowerState, upgrade: ShopUpgrade): TowerState 
   }
 
   if (content.type !== "shop") {
-    return withLog(tower, "There is no merchant here.");
+    return withLog(tower, "log.noMerchant");
   }
 
   if (tower.hero.gold < SHOP_COST) {
-    return withLog(tower, "Not enough gold. The merchant wants 20.");
+    return withLog(tower, "log.notEnoughGold");
   }
 
   const nextTower = cloneTower(tower);
@@ -149,16 +152,16 @@ export function buyUpgrade(tower: TowerState, upgrade: ShopUpgrade): TowerState 
 
   if (upgrade === "atk") {
     nextTower.hero.atk += 12;
-    pushLog(nextTower, "Bought sword training: +12 ATK.");
+    pushLog(nextTower, "log.buyAtk");
   }
   if (upgrade === "def") {
     nextTower.hero.def += 12;
-    pushLog(nextTower, "Bought shield training: +12 DEF.");
+    pushLog(nextTower, "log.buyDef");
   }
   if (upgrade === "hp") {
     nextTower.hero.hp += 250;
     nextTower.hero.maxHp = Math.max(nextTower.hero.maxHp, nextTower.hero.hp);
-    pushLog(nextTower, "Bought a royal elixir: +250 HP.");
+    pushLog(nextTower, "log.buyHp");
   }
 
   return nextTower;
@@ -167,14 +170,14 @@ export function buyUpgrade(tower: TowerState, upgrade: ShopUpgrade): TowerState 
 export function undo(tower: TowerState): TowerState {
   const [previous, ...rest] = tower.history;
   if (!previous) {
-    return withLog(tower, "No previous step to undo.");
+    return withLog(tower, "log.undoEmpty");
   }
 
   return {
     ...tower,
     ...cloneSnapshot(previous),
     history: rest.map(cloneSnapshot),
-    log: ["Undid the last step.", ...previous.log].slice(0, 7),
+    log: [{ key: "log.undid" }, ...previous.log].slice(0, 7),
   };
 }
 
@@ -203,37 +206,37 @@ function climb(tower: TowerState, direction: "up" | "down") {
 function tryOpenDoor(hero: HeroStats, tile: TileKind): { ok: true; opened: boolean; hero: HeroStats; message: string } | { ok: false; message: string } {
   if (tile === "yellowDoor") {
     if (hero.yellowKeys <= 0) {
-      return { ok: false, message: "A yellow door waits for a yellow key." };
+      return { ok: false, message: "log.yellowDoorBlocked" };
     }
     return {
       ok: true,
       opened: true,
       hero: { ...hero, yellowKeys: hero.yellowKeys - 1 },
-      message: "A yellow key turns. The door opens.",
+      message: "log.yellowDoorOpened",
     };
   }
 
   if (tile === "blueDoor") {
     if (hero.blueKeys <= 0) {
-      return { ok: false, message: "A blue door waits for a blue key." };
+      return { ok: false, message: "log.blueDoorBlocked" };
     }
     return {
       ok: true,
       opened: true,
       hero: { ...hero, blueKeys: hero.blueKeys - 1 },
-      message: "A blue key hums. The door opens.",
+      message: "log.blueDoorOpened",
     };
   }
 
   if (tile === "redDoor") {
     if (hero.redKeys <= 0) {
-      return { ok: false, message: "A red door waits for a red key." };
+      return { ok: false, message: "log.redDoorBlocked" };
     }
     return {
       ok: true,
       opened: true,
       hero: { ...hero, redKeys: hero.redKeys - 1 },
-      message: "A red key burns bright. The door opens.",
+      message: "log.redDoorOpened",
     };
   }
 
@@ -282,7 +285,7 @@ function snapshotTower(tower: TowerState): TowerSnapshot {
     bossDefeated: tower.bossDefeated,
     won: tower.won,
     lost: tower.lost,
-    log: [...tower.log],
+    log: tower.log.map(cloneLog),
   };
 }
 
@@ -292,7 +295,7 @@ function cloneSnapshot(snapshot: TowerSnapshot): TowerSnapshot {
     floors: snapshot.floors.map(cloneFloor),
     hero: { ...snapshot.hero },
     player: { ...snapshot.player },
-    log: [...snapshot.log],
+    log: snapshot.log.map(cloneLog),
   };
 }
 
@@ -302,7 +305,7 @@ function cloneTower(tower: TowerState): TowerState {
     floors: tower.floors.map(cloneFloor),
     hero: { ...tower.hero },
     player: { ...tower.player },
-    log: [...tower.log],
+    log: tower.log.map(cloneLog),
     history: tower.history.map(cloneSnapshot),
   };
 }
@@ -340,15 +343,22 @@ function cloneContent(content: CellContent): CellContent {
   return { type: "empty" };
 }
 
-function withLog(tower: TowerState, message: string) {
+function cloneLog(log: TowerState["log"][number]) {
+  return {
+    key: log.key,
+    params: log.params ? { ...log.params } : undefined,
+  };
+}
+
+function withLog(tower: TowerState, message: string, params?: Record<string, string | number>) {
   const nextTower = cloneTower(tower);
-  pushLog(nextTower, message);
+  pushLog(nextTower, message, params);
   return nextTower;
 }
 
-function pushLog(tower: TowerState, message: string) {
+function pushLog(tower: TowerState, message: string, params?: Record<string, string | number>) {
   if (message) {
-    tower.log = [message, ...tower.log].slice(0, 7);
+    tower.log = [{ key: message, params }, ...tower.log].slice(0, 7);
   }
 }
 

@@ -21,7 +21,18 @@ Goal: make the game feel like a compact, replayable tower rather than a rules de
 - Undo one step
 - Stronger route-planning pressure
 
-## v0.3 - Local Prompt Dungeon Generator
+## v0.3 - Classic UI and Localization
+
+Goal: make the project read as a classic Magic Tower-style web game at first glance.
+
+- Chinese/English UI switching
+- Classic light/dark theme switching
+- Classic game-window layout
+- Original pixel-style Canvas art
+- Translatable log events
+- Desktop no-scroll preservation
+
+## v0.4 - Local Prompt Dungeon Generator
 
 Goal: make the project live up to the name without requiring an API key.
 
@@ -32,7 +43,7 @@ Goal: make the project live up to the name without requiring an API key.
 - Export and import `level.json`
 - Share links with `?seed=` and encoded prompt
 
-## v0.4 - Optional AI Mode
+## v0.5 - Optional AI Mode
 
 Goal: let LLMs produce flavor and structured level data while the local engine remains authoritative.
 

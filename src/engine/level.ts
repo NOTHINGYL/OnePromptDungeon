@@ -94,7 +94,7 @@ export function createInitialTower(prompt = "Rescue the princess from the tower 
   return {
     title: "OnePromptDungeon",
     prompt,
-    seed: "v0.2-handcrafted-3f",
+    seed: "v0.3-classic-3f",
     floors,
     currentFloorIndex: 0,
     hero: { ...INITIAL_HERO },
@@ -103,10 +103,7 @@ export function createInitialTower(prompt = "Rescue the princess from the tower 
     bossDefeated: false,
     won: false,
     lost: false,
-    log: [
-      "The old tower accepts your wish and locks the crown room.",
-      "Route carefully. Every key, fight, and shop visit matters.",
-    ],
+    log: [{ key: "log.initialWish" }, { key: "log.initialRoute" }],
     history: [],
   };
 }
@@ -144,8 +141,8 @@ function createFloor(definition: FloorDefinition): FloorState {
 
   return {
     id: definition.id,
-    title: definition.title,
-    objective: definition.objective,
+    title: `floor.${definition.id}.title`,
+    objective: `floor.${definition.id}.objective`,
     width: definition.raw[0].length,
     height: definition.raw.length,
     tiles,

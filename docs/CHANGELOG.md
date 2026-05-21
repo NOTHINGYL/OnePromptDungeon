@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.0
+
+Classic Magic Tower UI and localization.
+
+- Added full Chinese/English UI switching with saved language preference.
+- Added classic light/dark theme switching with saved theme preference.
+- Reworked the layout into a classic game window with title bar, left status board, right map, and bottom log/forecast strip.
+- Converted engine logs into translatable log events.
+- Reworked Canvas visuals toward original pixel-style Magic Tower-inspired characters, monsters, items, doors, stairs, merchant, boss, and princess.
+- Updated README and roadmap to move local prompt generation to v0.4.
+- Added i18n tests.
+
 ## v0.2.0
 
 Three-floor Magic Tower-like experience.
