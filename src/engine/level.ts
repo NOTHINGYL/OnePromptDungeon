@@ -117,13 +117,13 @@ const INITIAL_HERO: Record<Difficulty, HeroStats> = {
     redKeys: 0,
   },
   normal: {
-    hp: 620,
-    maxHp: 620,
+    hp: 700,
+    maxHp: 700,
     atk: 38,
     def: 16,
-    gold: 0,
-    yellowKeys: 1,
-    blueKeys: 0,
+    gold: 1000,
+    yellowKeys: 2,
+    blueKeys: 1,
     redKeys: 0,
   },
   hard: {

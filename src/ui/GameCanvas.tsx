@@ -29,28 +29,28 @@ type Palette = {
 
 const PALETTES: Record<TowerTheme, Palette> = {
   "classic-light": {
-    floor: "#9a6038",
-    floorAlt: "#85502f",
-    wall: "#323b43",
-    wallShade: "#222930",
-    grid: "rgba(40, 21, 12, 0.28)",
-    frame: "#245db4",
-    doorYellow: "#e9c675",
-    doorBlue: "#77a6dc",
-    doorRed: "#d85b68",
+    floor: "#9a5a28",
+    floorAlt: "#7f451f",
+    wall: "#31373b",
+    wallShade: "#171b1f",
+    grid: "rgba(20, 12, 8, 0.42)",
+    frame: "#0a1d35",
+    doorYellow: "#f1b62b",
+    doorBlue: "#188add",
+    doorRed: "#c73631",
     text: "#f8f0da",
     overlay: "rgba(30, 18, 10, 0.78)",
   },
   "classic-dark": {
-    floor: "#4b321f",
-    floorAlt: "#3d291b",
-    wall: "#1c2533",
-    wallShade: "#111722",
-    grid: "rgba(255, 230, 170, 0.12)",
-    frame: "#d8b86b",
-    doorYellow: "#d2a63d",
-    doorBlue: "#4f7fc6",
-    doorRed: "#b94856",
+    floor: "#9a5a28",
+    floorAlt: "#7d431f",
+    wall: "#323940",
+    wallShade: "#15191e",
+    grid: "rgba(20, 12, 8, 0.45)",
+    frame: "#0a1d35",
+    doorYellow: "#f1b62b",
+    doorBlue: "#158ee6",
+    doorRed: "#c93430",
     text: "#fff6d7",
     overlay: "rgba(4, 6, 12, 0.82)",
   },
@@ -67,7 +67,7 @@ export function GameCanvas({ floor, language, theme, tower }: GameCanvasProps) {
     }
 
     const observer = new ResizeObserver(([entry]) => {
-      const nextSize = Math.floor(Math.min(entry.contentRect.width, entry.contentRect.height, 672));
+      const nextSize = Math.floor(Math.min(entry.contentRect.width, entry.contentRect.height));
       setSize(Math.max(nextSize, 320));
     });
 
@@ -155,18 +155,32 @@ function drawTile(ctx: CanvasRenderingContext2D, palette: Palette, kind: TileKin
   if (kind === "floor") {
     ctx.fillStyle = (x + y) % 2 === 0 ? palette.floor : palette.floorAlt;
     ctx.fillRect(left, top, tile, tile);
+    ctx.fillStyle = "rgba(255, 206, 124, 0.08)";
+    ctx.fillRect(left + tile * 0.14, top + tile * 0.22, tile * 0.58, tile * 0.04);
+    ctx.fillRect(left + tile * 0.24, top + tile * 0.62, tile * 0.52, tile * 0.04);
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.fillRect(left, top + tile * 0.94, tile, tile * 0.06);
+    ctx.fillRect(left + tile * 0.94, top, tile * 0.06, tile);
     ctx.strokeStyle = palette.grid;
     ctx.strokeRect(left + 0.5, top + 0.5, tile - 1, tile - 1);
-    drawBrickNoise(ctx, left, top, tile, "rgba(255,255,255,0.08)");
     return;
   }
 
   if (kind === "wall") {
-    ctx.fillStyle = palette.wall;
-    ctx.fillRect(left, top, tile, tile);
+    const brick = tile / 4;
     ctx.fillStyle = palette.wallShade;
-    ctx.fillRect(left, top + tile * 0.72, tile, tile * 0.28);
-    drawBrickNoise(ctx, left, top, tile, "rgba(255,255,255,0.1)");
+    ctx.fillRect(left, top, tile, tile);
+    for (let row = 0; row < 4; row += 1) {
+      for (let col = 0; col < 4; col += 1) {
+        const offset = row % 2 ? brick * 0.5 : 0;
+        ctx.fillStyle = (row + col) % 2 ? "#3d454d" : palette.wall;
+        ctx.fillRect(left + col * brick - offset, top + row * brick, brick - 1, brick - 1);
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        ctx.fillRect(left + col * brick - offset + 2, top + row * brick + 2, brick * 0.55, 2);
+      }
+    }
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(left, top + tile * 0.76, tile, tile * 0.24);
     ctx.strokeStyle = palette.grid;
     ctx.strokeRect(left + 0.5, top + 0.5, tile - 1, tile - 1);
     return;
@@ -174,19 +188,7 @@ function drawTile(ctx: CanvasRenderingContext2D, palette: Palette, kind: TileKin
 
   drawTile(ctx, palette, "floor", x, y, tile);
   const color = kind === "yellowDoor" ? palette.doorYellow : kind === "blueDoor" ? palette.doorBlue : palette.doorRed;
-  ctx.fillStyle = color;
-  ctx.fillRect(left + tile * 0.2, top + tile * 0.12, tile * 0.6, tile * 0.76);
-  ctx.strokeStyle = "rgba(40, 20, 10, 0.45)";
-  ctx.lineWidth = Math.max(2, tile * 0.045);
-  ctx.strokeRect(left + tile * 0.27, top + tile * 0.2, tile * 0.46, tile * 0.58);
-  ctx.fillStyle = "#fff2bc";
-  ctx.fillRect(left + tile * 0.58, top + tile * 0.49, tile * 0.08, tile * 0.08);
-}
-
-function drawBrickNoise(ctx: CanvasRenderingContext2D, left: number, top: number, tile: number, color: string) {
-  ctx.fillStyle = color;
-  ctx.fillRect(left + tile * 0.12, top + tile * 0.18, tile * 0.72, tile * 0.05);
-  ctx.fillRect(left + tile * 0.2, top + tile * 0.5, tile * 0.66, tile * 0.05);
+  roundedDoor(ctx, left, top, tile, color);
 }
 
 function drawContent(ctx: CanvasRenderingContext2D, palette: Palette, content: CellContent, x: number, y: number, tile: number) {
@@ -204,24 +206,20 @@ function drawContent(ctx: CanvasRenderingContext2D, palette: Palette, content: C
   }
 
   if (content.type === "stairsUp" || content.type === "stairsDown") {
-    ctx.fillStyle = content.type === "stairsUp" ? "#d7d7d7" : "#9fb0c4";
-    for (let step = 0; step < 5; step += 1) {
-      ctx.fillRect(cx - tile * 0.3 + step * tile * 0.05, top + tile * (0.72 - step * 0.12), tile * 0.58, tile * 0.08);
-    }
-    ctx.fillStyle = "rgba(0,0,0,0.32)";
-    ctx.fillRect(cx - tile * 0.24, top + tile * 0.18, tile * 0.48, tile * 0.12);
+    drawStairs(ctx, left, top, tile);
   }
 
   if (content.type === "shop") {
     ctx.fillStyle = "#f0c05a";
-    ctx.fillRect(left + tile * 0.22, top + tile * 0.22, tile * 0.56, tile * 0.5);
-    ctx.fillStyle = "#8d512e";
-    ctx.fillRect(left + tile * 0.28, top + tile * 0.3, tile * 0.44, tile * 0.1);
-    ctx.fillRect(left + tile * 0.36, top + tile * 0.48, tile * 0.28, tile * 0.24);
+    ctx.fillRect(left + tile * 0.07, top + tile * 0.18, tile * 0.86, tile * 0.22);
+    ctx.strokeStyle = "#221207";
+    ctx.lineWidth = Math.max(2, tile * 0.04);
+    ctx.strokeRect(left + tile * 0.08, top + tile * 0.18, tile * 0.84, tile * 0.22);
     ctx.fillStyle = "#1b1308";
-    ctx.font = `900 ${tile * 0.28}px ui-monospace, monospace`;
+    ctx.font = `900 ${tile * 0.22}px ui-monospace, monospace`;
     ctx.textAlign = "center";
-    ctx.fillText("$", cx, cy + tile * 0.1);
+    ctx.fillText("SHOP", cx, top + tile * 0.35);
+    drawMerchant(ctx, cx, cy + tile * 0.16, tile);
   }
 
   if (content.type === "princess") {
@@ -231,58 +229,80 @@ function drawContent(ctx: CanvasRenderingContext2D, palette: Palette, content: C
 
 function drawMonster(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: number, tile: number) {
   if (kind === "greenSlime") {
-    ctx.fillStyle = "#b5e5bd";
+    ctx.fillStyle = "#80df2a";
     ctx.beginPath();
-    ctx.arc(cx, cy + tile * 0.05, tile * 0.27, Math.PI, 0);
-    ctx.lineTo(cx + tile * 0.27, cy + tile * 0.22);
-    ctx.lineTo(cx - tile * 0.27, cy + tile * 0.22);
+    ctx.arc(cx, cy + tile * 0.08, tile * 0.32, Math.PI, 0);
+    ctx.lineTo(cx + tile * 0.34, cy + tile * 0.25);
+    ctx.lineTo(cx - tile * 0.34, cy + tile * 0.25);
     ctx.closePath();
     ctx.fill();
-    drawEyes(ctx, cx, cy, tile, "#e9574f");
+    ctx.fillStyle = "#3aa021";
+    ctx.fillRect(cx - tile * 0.28, cy + tile * 0.19, tile * 0.56, tile * 0.08);
+    drawEyes(ctx, cx, cy, tile, "#171b1f");
+    ctx.fillStyle = "#dfffb0";
+    ctx.fillRect(cx - tile * 0.18, cy - tile * 0.09, tile * 0.08, tile * 0.04);
     return;
   }
 
   if (kind === "nightBat") {
-    ctx.fillStyle = "#8f7bd8";
-    pixelDiamond(ctx, cx, cy, tile * 0.22);
+    ctx.fillStyle = "#6c3ba4";
+    ctx.fillRect(cx - tile * 0.42, cy - tile * 0.08, tile * 0.22, tile * 0.2);
+    ctx.fillRect(cx + tile * 0.2, cy - tile * 0.08, tile * 0.22, tile * 0.2);
+    ctx.fillStyle = "#291935";
+    pixelDiamond(ctx, cx, cy, tile * 0.26);
     ctx.fill();
-    ctx.fillRect(cx - tile * 0.38, cy - tile * 0.08, tile * 0.24, tile * 0.16);
-    ctx.fillRect(cx + tile * 0.14, cy - tile * 0.08, tile * 0.24, tile * 0.16);
-    drawEyes(ctx, cx, cy, tile, "#101521");
+    ctx.fillStyle = "#b78cff";
+    ctx.fillRect(cx - tile * 0.12, cy - tile * 0.05, tile * 0.07, tile * 0.06);
+    ctx.fillRect(cx + tile * 0.05, cy - tile * 0.05, tile * 0.07, tile * 0.06);
     return;
   }
 
   if (kind === "boneGuard") {
-    ctx.fillStyle = "#f1eadb";
-    ctx.fillRect(cx - tile * 0.15, cy - tile * 0.28, tile * 0.3, tile * 0.22);
-    ctx.fillRect(cx - tile * 0.08, cy - tile * 0.06, tile * 0.16, tile * 0.34);
-    ctx.fillRect(cx - tile * 0.25, cy + tile * 0.06, tile * 0.5, tile * 0.07);
-    drawEyes(ctx, cx, cy - tile * 0.16, tile, "#222");
+    ctx.fillStyle = "#efe5cf";
+    ctx.fillRect(cx - tile * 0.16, cy - tile * 0.34, tile * 0.32, tile * 0.24);
+    ctx.fillRect(cx - tile * 0.07, cy - tile * 0.08, tile * 0.14, tile * 0.38);
+    ctx.fillRect(cx - tile * 0.32, cy + tile * 0.02, tile * 0.64, tile * 0.06);
+    ctx.fillRect(cx - tile * 0.2, cy + tile * 0.3, tile * 0.12, tile * 0.08);
+    ctx.fillRect(cx + tile * 0.08, cy + tile * 0.3, tile * 0.12, tile * 0.08);
+    drawEyes(ctx, cx, cy - tile * 0.21, tile, "#111");
     return;
   }
 
   if (kind === "runeMage") {
-    ctx.fillStyle = "#b7b0ff";
-    ctx.fillRect(cx - tile * 0.18, cy - tile * 0.26, tile * 0.36, tile * 0.52);
-    ctx.fillStyle = "#4a3c9a";
-    ctx.fillRect(cx - tile * 0.28, cy - tile * 0.1, tile * 0.56, tile * 0.32);
-    drawEyes(ctx, cx, cy - tile * 0.1, tile, "#fff");
+    ctx.fillStyle = "#2b1641";
+    ctx.fillRect(cx - tile * 0.26, cy - tile * 0.32, tile * 0.52, tile * 0.68);
+    ctx.fillStyle = "#6f3fb1";
+    ctx.fillRect(cx - tile * 0.34, cy - tile * 0.02, tile * 0.68, tile * 0.3);
+    ctx.fillStyle = "#ffe26f";
+    ctx.fillRect(cx - tile * 0.08, cy - tile * 0.11, tile * 0.06, tile * 0.05);
+    ctx.fillRect(cx + tile * 0.04, cy - tile * 0.11, tile * 0.06, tile * 0.05);
     return;
   }
 
   if (kind === "ironKnight") {
-    ctx.fillStyle = "#aab0b8";
-    ctx.fillRect(cx - tile * 0.2, cy - tile * 0.28, tile * 0.4, tile * 0.56);
-    ctx.fillStyle = "#596271";
-    ctx.fillRect(cx - tile * 0.12, cy - tile * 0.18, tile * 0.24, tile * 0.1);
+    ctx.fillStyle = "#c6ccd0";
+    ctx.fillRect(cx - tile * 0.24, cy - tile * 0.34, tile * 0.48, tile * 0.64);
+    ctx.fillStyle = "#65707b";
+    ctx.fillRect(cx - tile * 0.16, cy - tile * 0.2, tile * 0.32, tile * 0.12);
+    ctx.fillStyle = "#f0d073";
+    ctx.fillRect(cx - tile * 0.07, cy - tile * 0.17, tile * 0.14, tile * 0.04);
     return;
   }
 
-  ctx.fillStyle = "#594a99";
-  ctx.fillRect(cx - tile * 0.28, cy - tile * 0.3, tile * 0.56, tile * 0.6);
-  ctx.fillStyle = "#202033";
-  ctx.fillRect(cx - tile * 0.38, cy - tile * 0.1, tile * 0.76, tile * 0.18);
-  drawEyes(ctx, cx, cy - tile * 0.06, tile, "#ff5a5a");
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(1.45, 1.45);
+  ctx.fillStyle = "#301011";
+  ctx.fillRect(-tile * 0.22, -tile * 0.34, tile * 0.44, tile * 0.64);
+  ctx.fillStyle = "#c43622";
+  ctx.fillRect(-tile * 0.3, -tile * 0.1, tile * 0.6, tile * 0.32);
+  ctx.fillStyle = "#ff7a32";
+  ctx.fillRect(-tile * 0.42, -tile * 0.42, tile * 0.16, tile * 0.22);
+  ctx.fillRect(tile * 0.26, -tile * 0.42, tile * 0.16, tile * 0.22);
+  ctx.fillStyle = "#f2d071";
+  ctx.fillRect(-tile * 0.09, -tile * 0.16, tile * 0.06, tile * 0.06);
+  ctx.fillRect(tile * 0.03, -tile * 0.16, tile * 0.06, tile * 0.06);
+  ctx.restore();
 }
 
 function drawItem(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: number, tile: number) {
@@ -290,17 +310,22 @@ function drawItem(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: n
     const color = kind === "yellowKey" ? "#e7c667" : kind === "blueKey" ? "#73a8ef" : "#f05d66";
     ctx.strokeStyle = color;
     ctx.lineWidth = Math.max(3, tile * 0.08);
-    ctx.strokeRect(cx - tile * 0.28, cy - tile * 0.12, tile * 0.18, tile * 0.18);
+    ctx.strokeRect(cx - tile * 0.3, cy - tile * 0.14, tile * 0.18, tile * 0.18);
     ctx.fillStyle = color;
-    ctx.fillRect(cx - tile * 0.1, cy - tile * 0.02, tile * 0.38, tile * 0.08);
-    ctx.fillRect(cx + tile * 0.12, cy + tile * 0.04, tile * 0.07, tile * 0.16);
+    ctx.fillRect(cx - tile * 0.12, cy - tile * 0.02, tile * 0.46, tile * 0.08);
+    ctx.fillRect(cx + tile * 0.12, cy + tile * 0.04, tile * 0.08, tile * 0.16);
+    ctx.fillRect(cx + tile * 0.24, cy + tile * 0.04, tile * 0.08, tile * 0.1);
     return;
   }
   if (kind.includes("Potion")) {
-    ctx.fillStyle = kind === "smallPotion" ? "#ff6b72" : "#b7bcff";
-    ctx.fillRect(cx - tile * 0.14, cy - tile * 0.18, tile * 0.28, tile * 0.36);
     ctx.fillStyle = "#f3f0e2";
-    ctx.fillRect(cx - tile * 0.09, cy - tile * 0.28, tile * 0.18, tile * 0.1);
+    ctx.fillRect(cx - tile * 0.11, cy - tile * 0.31, tile * 0.22, tile * 0.12);
+    ctx.fillStyle = "#c9d3dd";
+    ctx.fillRect(cx - tile * 0.18, cy - tile * 0.18, tile * 0.36, tile * 0.42);
+    ctx.fillStyle = kind === "smallPotion" ? "#f05a50" : "#4f92ff";
+    ctx.fillRect(cx - tile * 0.14, cy - tile * 0.04, tile * 0.28, tile * 0.25);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(cx - tile * 0.1, cy - tile * 0.13, tile * 0.06, tile * 0.08);
     return;
   }
   ctx.fillStyle = kind === "redGem" ? "#ff5f72" : "#7fb7ff";
@@ -316,24 +341,84 @@ function drawHero(ctx: CanvasRenderingContext2D, x: number, y: number, tile: num
   const top = y * tile;
   const cx = left + tile / 2;
   const cy = top + tile / 2;
-  ctx.fillStyle = "#e7d9bd";
-  ctx.fillRect(cx - tile * 0.12, cy - tile * 0.33, tile * 0.24, tile * 0.16);
-  ctx.fillStyle = "#89b4ff";
-  ctx.fillRect(cx - tile * 0.22, cy - tile * 0.15, tile * 0.44, tile * 0.36);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(cx - tile * 0.3, cy - tile * 0.13, tile * 0.12, tile * 0.22);
-  ctx.fillRect(cx + tile * 0.18, cy - tile * 0.13, tile * 0.12, tile * 0.22);
-  ctx.fillStyle = "#d7b56d";
-  ctx.fillRect(cx + tile * 0.24, cy - tile * 0.34, tile * 0.08, tile * 0.46);
+  drawHeroSprite(ctx, cx, cy, tile);
 }
 
 function drawPrincess(ctx: CanvasRenderingContext2D, cx: number, cy: number, tile: number) {
-  ctx.fillStyle = "#ffe07d";
-  ctx.fillRect(cx - tile * 0.16, cy - tile * 0.34, tile * 0.32, tile * 0.16);
-  ctx.fillStyle = "#fff0d2";
-  ctx.fillRect(cx - tile * 0.1, cy - tile * 0.2, tile * 0.2, tile * 0.14);
-  ctx.fillStyle = "#f39bbd";
-  ctx.fillRect(cx - tile * 0.24, cy - tile * 0.05, tile * 0.48, tile * 0.34);
+  ctx.fillStyle = "#ffd94e";
+  ctx.fillRect(cx - tile * 0.2, cy - tile * 0.38, tile * 0.4, tile * 0.18);
+  ctx.fillStyle = "#ffe1bd";
+  ctx.fillRect(cx - tile * 0.12, cy - tile * 0.21, tile * 0.24, tile * 0.16);
+  ctx.fillStyle = "#ff79ad";
+  ctx.fillRect(cx - tile * 0.28, cy - tile * 0.04, tile * 0.56, tile * 0.42);
+  ctx.fillStyle = "#f8d8ff";
+  ctx.fillRect(cx - tile * 0.18, cy + tile * 0.03, tile * 0.36, tile * 0.06);
+}
+
+function roundedDoor(ctx: CanvasRenderingContext2D, left: number, top: number, tile: number, color: string) {
+  const x = left + tile * 0.22;
+  const y = top + tile * 0.14;
+  const w = tile * 0.56;
+  const h = tile * 0.74;
+  ctx.fillStyle = "#18100a";
+  ctx.fillRect(x - tile * 0.06, y + tile * 0.16, w + tile * 0.12, h - tile * 0.08);
+  ctx.fillStyle = "#f1c65d";
+  ctx.fillRect(x - tile * 0.04, y + tile * 0.11, w + tile * 0.08, tile * 0.14);
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y + tile * 0.22, w, h - tile * 0.22);
+  ctx.beginPath();
+  ctx.arc(x + w / 2, y + tile * 0.22, w / 2, Math.PI, 0);
+  ctx.lineTo(x + w, y + tile * 0.22);
+  ctx.lineTo(x, y + tile * 0.22);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#1a0b04";
+  ctx.lineWidth = Math.max(2, tile * 0.05);
+  ctx.strokeRect(x + tile * 0.08, y + tile * 0.3, w - tile * 0.16, h - tile * 0.38);
+  ctx.fillStyle = "#ffe7a8";
+  ctx.fillRect(x + w * 0.62, y + h * 0.58, tile * 0.08, tile * 0.08);
+}
+
+function drawStairs(ctx: CanvasRenderingContext2D, left: number, top: number, tile: number) {
+  ctx.fillStyle = "#272724";
+  ctx.fillRect(left + tile * 0.2, top + tile * 0.15, tile * 0.58, tile * 0.7);
+  ctx.fillStyle = "#efe5d0";
+  for (let step = 0; step < 6; step += 1) {
+    ctx.fillRect(left + tile * (0.23 + step * 0.045), top + tile * (0.76 - step * 0.105), tile * 0.55, tile * 0.075);
+    ctx.fillStyle = step % 2 ? "#c8b89d" : "#efe5d0";
+  }
+  ctx.fillStyle = "rgba(0,0,0,0.36)";
+  ctx.fillRect(left + tile * 0.22, top + tile * 0.2, tile * 0.48, tile * 0.08);
+}
+
+function drawMerchant(ctx: CanvasRenderingContext2D, cx: number, cy: number, tile: number) {
+  ctx.fillStyle = "#2d1a0b";
+  ctx.fillRect(cx - tile * 0.17, cy - tile * 0.2, tile * 0.34, tile * 0.38);
+  ctx.fillStyle = "#df9a48";
+  ctx.fillRect(cx - tile * 0.13, cy - tile * 0.09, tile * 0.26, tile * 0.15);
+  ctx.fillStyle = "#2da542";
+  ctx.fillRect(cx - tile * 0.23, cy + tile * 0.07, tile * 0.46, tile * 0.24);
+  ctx.fillStyle = "#e4bd4b";
+  ctx.fillRect(cx - tile * 0.2, cy - tile * 0.28, tile * 0.4, tile * 0.1);
+}
+
+function drawHeroSprite(ctx: CanvasRenderingContext2D, cx: number, cy: number, tile: number) {
+  ctx.fillStyle = "#0b111a";
+  ctx.fillRect(cx - tile * 0.17, cy - tile * 0.38, tile * 0.34, tile * 0.18);
+  ctx.fillStyle = "#eab27d";
+  ctx.fillRect(cx - tile * 0.12, cy - tile * 0.22, tile * 0.24, tile * 0.15);
+  ctx.fillStyle = "#10284a";
+  ctx.fillRect(cx - tile * 0.24, cy - tile * 0.05, tile * 0.48, tile * 0.42);
+  ctx.fillStyle = "#2460a8";
+  ctx.fillRect(cx - tile * 0.18, cy, tile * 0.36, tile * 0.22);
+  ctx.fillStyle = "#d28a35";
+  ctx.fillRect(cx - tile * 0.31, cy - tile * 0.02, tile * 0.12, tile * 0.32);
+  ctx.fillRect(cx + tile * 0.19, cy - tile * 0.02, tile * 0.12, tile * 0.32);
+  ctx.fillStyle = "#f5d07b";
+  ctx.fillRect(cx - tile * 0.09, cy - tile * 0.17, tile * 0.04, tile * 0.04);
+  ctx.fillRect(cx + tile * 0.05, cy - tile * 0.17, tile * 0.04, tile * 0.04);
+  ctx.fillStyle = "#d7b56d";
+  ctx.fillRect(cx + tile * 0.29, cy - tile * 0.36, tile * 0.07, tile * 0.5);
 }
 
 function drawEyes(ctx: CanvasRenderingContext2D, cx: number, cy: number, tile: number, color: string) {

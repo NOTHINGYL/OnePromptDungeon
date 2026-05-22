@@ -9,7 +9,7 @@ describe("tower movement", () => {
 
     const next = moveHero(tower, "right");
 
-    expect(next.hero.yellowKeys).toBe(0);
+    expect(next.hero.yellowKeys).toBe(1);
     expect(next.player).toEqual({ x: 7, y: 13 });
     expect(getCurrentFloor(next).tiles[13][7]).toBe("floor");
   });
@@ -75,7 +75,7 @@ describe("shop and undo", () => {
     const restored = undo(bought);
 
     expect(restored.hero.gold).toBe(20);
-    expect(restored.hero.hp).toBe(620);
+    expect(restored.hero.hp).toBe(700);
     expect(restored.history).toHaveLength(0);
   });
 });
