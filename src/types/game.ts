@@ -17,6 +17,8 @@ export type MonsterKind =
   | "ironKnight"
   | "towerWarden";
 
+export type Difficulty = "easy" | "normal" | "hard";
+
 export type Position = {
   x: number;
   y: number;
@@ -92,6 +94,7 @@ export type TowerState = TowerSnapshot & {
   title: string;
   prompt: string;
   seed: string;
+  difficulty: Difficulty;
   history: TowerSnapshot[];
 };
 

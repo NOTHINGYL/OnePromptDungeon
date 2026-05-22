@@ -75,7 +75,7 @@ describe("shop and undo", () => {
     const restored = undo(bought);
 
     expect(restored.hero.gold).toBe(20);
-    expect(restored.hero.hp).toBe(540);
+    expect(restored.hero.hp).toBe(620);
     expect(restored.history).toHaveLength(0);
   });
 });

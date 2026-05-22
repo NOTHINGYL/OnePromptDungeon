@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.4.0
+
+Premium Neo-Retro Tower UI and local seed generation.
+
+- Rebuilt the app shell into a map-first Premium Neo-Retro Tower layout.
+- Added the default collapsed `Wish Forge` button and right-side generator drawer.
+- Added local `Wish + Seed + Difficulty` generation without requiring an API key.
+- Added deterministic seed utilities and generator tests.
+- Added right-side objective, monster forecast, minimap, and seed badge.
+- Added bottom Forecast, Merchant, Tower Log, and Route Hint panels.
+- Updated desktop layout checks so 1280x720 stays no-scroll in both collapsed and opened Forge states.
+- Updated README, roadmap, package version, and local v0.4 plan notes.
+
 ## v0.3.0
 
 Classic Magic Tower UI and localization.
