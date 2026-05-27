@@ -2,7 +2,7 @@
 
 OnePromptDungeon is a browser-playable, Magic Tower-like dungeon game designed for GitHub Pages.
 
-v0.4 turns the project into a Premium Neo-Retro Tower: a large playable 15x15 map, dense RPG HUD, right-side tactical panel, collapsible Wish Forge, and a local seed generator that creates reproducible three-floor towers without an API key.
+v0.5 turns the project into a sprite-driven Premium Neo-Retro Tower: a large playable 15x15 map, dense classic RPG HUD, right-side tactical panel, collapsible Wish Forge, and a PNG sprite sheet for hero, monsters, doors, items, tiles, princess, merchant, and boss.
 
 ## Play
 
@@ -45,17 +45,22 @@ npm test
 - Shop: stand on the merchant tile and buy ATK, DEF, or HP upgrades
 - Goal: climb to 3F, defeat the Crystal Warden, and rescue the princess
 
-## What v0.4 Includes
+## What v0.5 Includes
 
+- PNG sprite sheet rendering via `public/assets/tower-sprites-v05.png`
+- Sprite metadata in `src/assets/sprites.ts`
+- Canvas `drawImage` rendering for floor, wall, doors, keys, potions, gems, monsters, hero, princess, merchant, stairs, and boss
+- UI icons and hero portrait reuse the same sprite sheet for a more coherent Magic Tower look
+- Classic dark tower HUD refinements to move away from generic modern web UI
 - Premium Neo-Retro Tower UI inspired by classic tower RPGs, rebuilt with a larger map-first layout
 - Collapsible `Wish Forge` drawer for Wish, Seed, Difficulty, Generate, Export JSON, and Share Link
-- Local seed generator: `Wish + Seed + Difficulty + v0.4` creates reproducible three-floor towers
+- Local seed generator: `Wish + Seed + Difficulty + v0.5` creates reproducible three-floor towers
 - Prompt keyword handling for routes such as scarce blue keys, risky shops, boss rush, treasure, and defense paths
 - Right-side tactical panel with objective, monster forecast, minimap, and seed badge
 - Bottom HUD for battle forecast, merchant choices, tower log, and route hint
 - Full Chinese/English UI switch with saved preference
 - Classic light/dark theme switch with saved preference
-- Original Canvas-drawn pixel-style hero, monsters, items, stairs, merchant, boss, and princess
+- Original project PNG pixel-style hero, monsters, items, stairs, merchant, boss, and princess
 - Three 15x15 floors with deterministic seed-based variation
 - Persistent floor state when moving up and down stairs
 - Deterministic Magic Tower-style combat preview
@@ -78,8 +83,9 @@ The project is inspired by deterministic tower RPGs: the fun comes from route pl
 - v0.2: Three-floor polished Magic Tower-like experience
 - v0.3: Classic Magic Tower-style UI, bilingual text, and light/dark themes
 - v0.4: Premium Neo-Retro UI, Wish Forge drawer, local seed generator
-- v0.5: Stronger generator presets, solvability reports, import/export polish
-- v0.6: Optional AI mode for story/theme/level JSON generation
+- v0.5: PNG sprite sheet, design-match tower UI, stronger visual identity
+- v0.6: Stronger generator presets, solvability reports, import/export polish
+- v0.7: Optional AI mode for story/theme/level JSON generation
 
 More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -87,6 +93,7 @@ More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ```txt
 src/
+  assets/     Sprite sheet metadata
   data/       Item, monster, and shop catalog
   engine/     Combat, tower movement, shops, undo, and local seed generation
   types/      Shared game types
@@ -96,6 +103,8 @@ src/
 docs/
   CHANGELOG.md
   ROADMAP.md
+public/
+  assets/     PNG sprite sheet
 ```
 
-Original visuals are drawn in Canvas. No classic Magic Tower art, maps, names, or copyrighted materials are copied.
+Original visuals are rendered from project PNG sprites and Canvas. No classic Magic Tower art, maps, names, or copyrighted materials are copied.

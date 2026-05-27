@@ -44,7 +44,17 @@ Goal: make the game look star-worthy while finally making the project live up to
 - Export tower JSON to clipboard
 - Share links with `?seed=`, `?difficulty=`, and encoded wish
 
-## v0.5 - Stronger Local Generator
+## v0.5 - PNG Sprite Sheet and Design-Match UI
+
+Goal: make the playable app look much closer to the design mockups by moving character, item, monster, and tile art out of CSS primitives and into a project PNG sprite sheet.
+
+- Add project PNG sprite sheet
+- Render map tiles, doors, items, monsters, hero, princess, merchant, stairs, and boss via Canvas `drawImage`
+- Reuse sprite assets in HUD panels and route hints
+- Refine classic dark tower UI away from modern web styling
+- Keep 1280x720 desktop no-scroll checks
+
+## v0.6 - Stronger Local Generator
 
 Goal: make generated towers feel less template-like and easier to share.
 
@@ -55,7 +65,7 @@ Goal: make generated towers feel less template-like and easier to share.
 - Add route pressure score and generated tower summary
 - Add optional animated README GIF
 
-## v0.6 - Optional AI Mode
+## v0.7 - Optional AI Mode
 
 Goal: let LLMs produce flavor and structured level data while the local engine remains authoritative.
 

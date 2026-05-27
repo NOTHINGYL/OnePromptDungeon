@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MONSTERS } from "../data/catalog";
 import { previewCombat } from "../engine/combat";
 import { translate, type Language } from "../i18n";
+import { SPRITE_SHEET_URL, SPRITES, type SpriteName } from "../assets/sprites";
 import type { CellContent, FloorState, TileKind, TowerState } from "../types/game";
 
 export type TowerTheme = "classic-light" | "classic-dark";
@@ -60,6 +61,7 @@ export function GameCanvas({ floor, language, theme, tower }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const [size, setSize] = useState(640);
+  const [spriteSheet, setSpriteSheet] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => {
     if (!shellRef.current) {
@@ -73,6 +75,13 @@ export function GameCanvas({ floor, language, theme, tower }: GameCanvasProps) {
 
     observer.observe(shellRef.current);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const image = new Image();
+    image.src = SPRITE_SHEET_URL;
+    image.onload = () => setSpriteSheet(image);
+    image.onerror = () => setSpriteSheet(null);
   }, []);
 
   const hoverPreview = useMemo(() => {
@@ -108,8 +117,8 @@ export function GameCanvas({ floor, language, theme, tower }: GameCanvasProps) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
 
-    drawGame(ctx, floor, language, PALETTES[theme], tower, size);
-  }, [floor, language, theme, tower, size]);
+    drawGame(ctx, floor, language, PALETTES[theme], tower, size, spriteSheet);
+  }, [floor, language, theme, tower, size, spriteSheet]);
 
   return (
     <div className="board-shell" ref={shellRef}>
@@ -124,7 +133,15 @@ export function GameCanvas({ floor, language, theme, tower }: GameCanvasProps) {
   );
 }
 
-function drawGame(ctx: CanvasRenderingContext2D, floor: FloorState, language: Language, palette: Palette, tower: TowerState, size: number) {
+function drawGame(
+  ctx: CanvasRenderingContext2D,
+  floor: FloorState,
+  language: Language,
+  palette: Palette,
+  tower: TowerState,
+  size: number,
+  spriteSheet: HTMLImageElement | null,
+) {
   const tile = size / floor.width;
   ctx.clearRect(0, 0, size, size);
   ctx.fillStyle = palette.floor;
@@ -132,12 +149,12 @@ function drawGame(ctx: CanvasRenderingContext2D, floor: FloorState, language: La
 
   for (let y = 0; y < floor.height; y += 1) {
     for (let x = 0; x < floor.width; x += 1) {
-      drawTile(ctx, palette, floor.tiles[y][x], x, y, tile);
-      drawContent(ctx, palette, floor.contents[y][x], x, y, tile);
+      drawTile(ctx, palette, floor.tiles[y][x], x, y, tile, spriteSheet);
+      drawContent(ctx, palette, floor.contents[y][x], x, y, tile, spriteSheet);
     }
   }
 
-  drawHero(ctx, tower.player.x, tower.player.y, tile);
+  drawHero(ctx, tower.player.x, tower.player.y, tile, spriteSheet);
   drawFrame(ctx, palette, size, tile);
 
   if (tower.won) {
@@ -148,11 +165,25 @@ function drawGame(ctx: CanvasRenderingContext2D, floor: FloorState, language: La
   }
 }
 
-function drawTile(ctx: CanvasRenderingContext2D, palette: Palette, kind: TileKind, x: number, y: number, tile: number) {
+function drawTile(
+  ctx: CanvasRenderingContext2D,
+  palette: Palette,
+  kind: TileKind,
+  x: number,
+  y: number,
+  tile: number,
+  spriteSheet: HTMLImageElement | null,
+) {
   const left = x * tile;
   const top = y * tile;
 
   if (kind === "floor") {
+    if (spriteSheet) {
+      drawSheetSprite(ctx, spriteSheet, "floor", left, top, tile, tile, "cover");
+      ctx.strokeStyle = palette.grid;
+      ctx.strokeRect(left + 0.5, top + 0.5, tile - 1, tile - 1);
+      return;
+    }
     ctx.fillStyle = (x + y) % 2 === 0 ? palette.floor : palette.floorAlt;
     ctx.fillRect(left, top, tile, tile);
     ctx.fillStyle = "rgba(255, 206, 124, 0.08)";
@@ -167,6 +198,12 @@ function drawTile(ctx: CanvasRenderingContext2D, palette: Palette, kind: TileKin
   }
 
   if (kind === "wall") {
+    if (spriteSheet) {
+      drawSheetSprite(ctx, spriteSheet, "wall", left, top, tile, tile, "cover");
+      ctx.strokeStyle = palette.grid;
+      ctx.strokeRect(left + 0.5, top + 0.5, tile - 1, tile - 1);
+      return;
+    }
     const brick = tile / 4;
     ctx.fillStyle = palette.wallShade;
     ctx.fillRect(left, top, tile, tile);
@@ -186,30 +223,51 @@ function drawTile(ctx: CanvasRenderingContext2D, palette: Palette, kind: TileKin
     return;
   }
 
-  drawTile(ctx, palette, "floor", x, y, tile);
+  drawTile(ctx, palette, "floor", x, y, tile, spriteSheet);
   const color = kind === "yellowDoor" ? palette.doorYellow : kind === "blueDoor" ? palette.doorBlue : palette.doorRed;
+  if (spriteSheet) {
+    const spriteName = kind === "yellowDoor" ? "yellowDoor" : kind === "blueDoor" ? "blueDoor" : "redDoor";
+    drawSheetSprite(ctx, spriteSheet, spriteName, left + tile * 0.04, top - tile * 0.08, tile * 0.92, tile * 1.12, "contain");
+    return;
+  }
   roundedDoor(ctx, left, top, tile, color);
 }
 
-function drawContent(ctx: CanvasRenderingContext2D, palette: Palette, content: CellContent, x: number, y: number, tile: number) {
+function drawContent(
+  ctx: CanvasRenderingContext2D,
+  palette: Palette,
+  content: CellContent,
+  x: number,
+  y: number,
+  tile: number,
+  spriteSheet: HTMLImageElement | null,
+) {
   const left = x * tile;
   const top = y * tile;
   const cx = left + tile / 2;
   const cy = top + tile / 2;
 
   if (content.type === "monster") {
-    drawMonster(ctx, content.monster, cx, cy, tile);
+    drawMonster(ctx, content.monster, cx, cy, tile, spriteSheet);
   }
 
   if (content.type === "item") {
-    drawItem(ctx, content.item, cx, cy, tile);
+    drawItem(ctx, content.item, cx, cy, tile, spriteSheet);
   }
 
   if (content.type === "stairsUp" || content.type === "stairsDown") {
+    if (spriteSheet) {
+      drawSheetSprite(ctx, spriteSheet, "stairs", left + tile * 0.08, top + tile * 0.02, tile * 0.84, tile * 0.9, "contain");
+      return;
+    }
     drawStairs(ctx, left, top, tile);
   }
 
   if (content.type === "shop") {
+    if (spriteSheet) {
+      drawSheetSprite(ctx, spriteSheet, "shop", left - tile * 0.06, top - tile * 0.14, tile * 1.12, tile * 1.16, "contain");
+      return;
+    }
     ctx.fillStyle = "#f0c05a";
     ctx.fillRect(left + tile * 0.07, top + tile * 0.18, tile * 0.86, tile * 0.22);
     ctx.strokeStyle = "#221207";
@@ -223,11 +281,25 @@ function drawContent(ctx: CanvasRenderingContext2D, palette: Palette, content: C
   }
 
   if (content.type === "princess") {
+    if (spriteSheet) {
+      drawSheetSprite(ctx, spriteSheet, "princess", left + tile * 0.1, top - tile * 0.15, tile * 0.8, tile * 1.12, "contain");
+      return;
+    }
     drawPrincess(ctx, cx, cy, tile);
   }
 }
 
-function drawMonster(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: number, tile: number) {
+function drawMonster(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: number, tile: number, spriteSheet: HTMLImageElement | null) {
+  if (spriteSheet) {
+    const spriteName = monsterSprite(kind);
+    if (spriteName === "towerWarden") {
+      drawSheetSprite(ctx, spriteSheet, spriteName, cx - tile * 0.75, cy - tile * 0.92, tile * 1.5, tile * 1.52, "contain");
+      return;
+    }
+    drawSheetSprite(ctx, spriteSheet, spriteName, cx - tile * 0.42, cy - tile * 0.45, tile * 0.84, tile * 0.9, "contain");
+    return;
+  }
+
   if (kind === "greenSlime") {
     ctx.fillStyle = "#80df2a";
     ctx.beginPath();
@@ -305,7 +377,13 @@ function drawMonster(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy
   ctx.restore();
 }
 
-function drawItem(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: number, tile: number) {
+function drawItem(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: number, tile: number, spriteSheet: HTMLImageElement | null) {
+  if (spriteSheet) {
+    const spriteName = itemSprite(kind);
+    drawSheetSprite(ctx, spriteSheet, spriteName, cx - tile * 0.34, cy - tile * 0.38, tile * 0.68, tile * 0.76, "contain");
+    return;
+  }
+
   if (kind.endsWith("Key")) {
     const color = kind === "yellowKey" ? "#e7c667" : kind === "blueKey" ? "#73a8ef" : "#f05d66";
     ctx.strokeStyle = color;
@@ -336,11 +414,15 @@ function drawItem(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: n
   ctx.fill();
 }
 
-function drawHero(ctx: CanvasRenderingContext2D, x: number, y: number, tile: number) {
+function drawHero(ctx: CanvasRenderingContext2D, x: number, y: number, tile: number, spriteSheet: HTMLImageElement | null) {
   const left = x * tile;
   const top = y * tile;
   const cx = left + tile / 2;
   const cy = top + tile / 2;
+  if (spriteSheet) {
+    drawSheetSprite(ctx, spriteSheet, "hero", left + tile * 0.06, top - tile * 0.16, tile * 0.88, tile * 1.16, "contain");
+    return;
+  }
   drawHeroSprite(ctx, cx, cy, tile);
 }
 
@@ -419,6 +501,65 @@ function drawHeroSprite(ctx: CanvasRenderingContext2D, cx: number, cy: number, t
   ctx.fillRect(cx + tile * 0.05, cy - tile * 0.17, tile * 0.04, tile * 0.04);
   ctx.fillStyle = "#d7b56d";
   ctx.fillRect(cx + tile * 0.29, cy - tile * 0.36, tile * 0.07, tile * 0.5);
+}
+
+function drawSheetSprite(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  name: SpriteName,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  fit: "cover" | "contain",
+) {
+  const sprite = SPRITES[name];
+  const scale =
+    fit === "cover"
+      ? Math.max(width / sprite.w, height / sprite.h)
+      : Math.min(width / sprite.w, height / sprite.h);
+  const drawWidth = sprite.w * scale;
+  const drawHeight = sprite.h * scale;
+  const drawX = x + (width - drawWidth) / 2;
+  const drawY = y + (height - drawHeight) / 2;
+
+  ctx.drawImage(image, sprite.x, sprite.y, sprite.w, sprite.h, drawX, drawY, drawWidth, drawHeight);
+}
+
+function monsterSprite(kind: string): SpriteName {
+  switch (kind) {
+    case "greenSlime":
+      return "greenSlime";
+    case "nightBat":
+      return "nightBat";
+    case "boneGuard":
+      return "boneGuard";
+    case "runeMage":
+      return "runeMage";
+    case "ironKnight":
+      return "ironKnight";
+    default:
+      return "towerWarden";
+  }
+}
+
+function itemSprite(kind: string): SpriteName {
+  switch (kind) {
+    case "smallPotion":
+      return "smallPotion";
+    case "largePotion":
+      return "largePotion";
+    case "redGem":
+      return "redGem";
+    case "blueGem":
+      return "blueGem";
+    case "yellowKey":
+      return "yellowKey";
+    case "blueKey":
+      return "blueKey";
+    default:
+      return "redKey";
+  }
 }
 
 function drawEyes(ctx: CanvasRenderingContext2D, cx: number, cy: number, tile: number, color: string) {

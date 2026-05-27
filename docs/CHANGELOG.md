@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.5.0
+
+PNG sprite sheet and design-match tower UI.
+
+- Added `public/assets/tower-sprites-v05.png` as the project sprite sheet.
+- Added sprite metadata in `src/assets/sprites.ts`.
+- Replaced Canvas primitive art for tiles, doors, keys, potions, gems, monsters, stairs, shop, hero, princess, and boss with PNG sprite rendering.
+- Reused the sprite sheet in the React HUD for the hero portrait, route hints, items, keys, and monster forecast.
+- Refined the UI toward the design mockups: darker classic tower panels, tighter HUD proportions, larger map priority, and less generic modern web styling.
+- Added local v0.5 planning notes.
+- Updated README, roadmap, and package version.
+
 ## v0.4.0
 
 Premium Neo-Retro Tower UI and local seed generation.

@@ -51,7 +51,7 @@ export const THEME_STORAGE_KEY = "opd.theme";
 
 const dictionary: Record<Language, Record<string, string>> = {
   en: {
-    "app.version": "v0.4 / Premium Neo-Retro Tower",
+    "app.version": "v0.5 / PNG sprite tower UI",
     "app.title": "OnePromptDungeon",
     "app.seed": "Seed",
     "button.restart": "Restart",
@@ -171,7 +171,7 @@ const dictionary: Record<Language, Record<string, string>> = {
     "log.undid": "Undid the last step.",
   },
   zh: {
-    "app.version": "v0.4 / 高级像素魔塔",
+    "app.version": "v0.5 / PNG 像素魔塔",
     "app.title": "OnePromptDungeon",
     "app.seed": "种子",
     "button.restart": "重开",

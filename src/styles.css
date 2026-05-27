@@ -312,6 +312,11 @@ dd {
     #0b141e;
 }
 
+.hero-portrait .sprite-sheet {
+  width: min(100%, 122px);
+  height: min(100%, 116px);
+}
+
 .hero-portrait span {
   position: relative;
   width: 118px;
@@ -799,6 +804,11 @@ canvas {
   display: inline-block;
   flex: none;
   image-rendering: pixelated;
+}
+
+.sprite-sheet {
+  background-repeat: no-repeat;
+  background-color: transparent;
 }
 
 .sprite-heart {

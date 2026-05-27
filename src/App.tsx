@@ -10,6 +10,7 @@ import {
   translate,
   type Language,
 } from "./i18n";
+import { spriteStyle, type SpriteName } from "./assets/sprites";
 import { GameCanvas, type TowerTheme } from "./ui/GameCanvas";
 import type { CellContent, Difficulty, FloorState, LogEntry, ShopUpgrade, TowerState } from "./types/game";
 
@@ -179,7 +180,7 @@ export default function App() {
         <div className="tower-layout">
           <aside className="status-rail" aria-label={t("status.hero")}>
             <section className="hero-card frame-panel">
-              <div className="hero-portrait" aria-hidden="true"><span /></div>
+              <div className="hero-portrait" aria-hidden="true"><SpriteIcon kind="heroPortrait" width={122} height={116} /></div>
               <div className="hero-meta">
                 <span>{t("status.floor")}</span>
                 <strong>{tower.currentFloorIndex + 1} / {tower.floors.length}</strong>
@@ -207,10 +208,10 @@ export default function App() {
             <section className="items-card frame-panel">
               <h2>{t("status.items")}</h2>
               <div className="item-row">
-                <SpriteIcon kind="potionRed" /><span>2</span>
-                <SpriteIcon kind="potionBlue" /><span>1</span>
-                <SpriteIcon kind="gemRed" /><span>1</span>
-                <SpriteIcon kind="gemBlue" /><span>0</span>
+                <SpriteIcon kind="smallPotion" /><span>2</span>
+                <SpriteIcon kind="largePotion" /><span>1</span>
+                <SpriteIcon kind="redGem" /><span>1</span>
+                <SpriteIcon kind="blueGem" /><span>0</span>
               </div>
             </section>
 
@@ -575,7 +576,76 @@ function Meter({ max, value }: { max: number; value: number }) {
   );
 }
 
-function SpriteIcon({ kind }: { kind: string }) {
-  const normalized = kind === "greenSlime" ? "slime" : kind === "nightBat" ? "bat" : kind === "boneGuard" ? "skeleton" : kind === "runeMage" ? "mage" : kind === "ironKnight" ? "knight" : kind === "towerWarden" ? "boss" : kind;
+function SpriteIcon({ height, kind, width }: { height?: number; kind: string; width?: number }) {
+  const sheetName = toSheetSprite(kind);
+  if (sheetName) {
+    const displayWidth = width ?? (sheetName === "heroPortrait" ? 122 : sheetName === "towerWarden" ? 48 : 30);
+    const displayHeight = height ?? (sheetName === "heroPortrait" ? 116 : sheetName === "towerWarden" ? 48 : 30);
+    return <i className="sprite sprite-sheet" style={spriteStyle(sheetName, displayWidth, displayHeight)} aria-hidden="true" />;
+  }
+
+  const normalized = kind === "heart" ? "heart" : kind === "sword" ? "sword" : kind === "shield" ? "shield" : kind === "coin" ? "coin" : kind;
   return <i className={`sprite sprite-${normalized}`} aria-hidden="true" />;
+}
+
+function toSheetSprite(kind: string): SpriteName | null {
+  switch (kind) {
+    case "greenSlime":
+      return "greenSlime";
+    case "nightBat":
+    case "bat":
+      return "nightBat";
+    case "boneGuard":
+      return "boneGuard";
+    case "runeMage":
+      return "runeMage";
+    case "ironKnight":
+      return "ironKnight";
+    case "towerWarden":
+    case "boss":
+      return "towerWarden";
+    case "hero":
+      return "hero";
+    case "heroPortrait":
+      return "heroPortrait";
+    case "princess":
+      return "princess";
+    case "key-yellow":
+    case "keyYellow":
+    case "yellowKey":
+      return "yellowKey";
+    case "key-blue":
+    case "keyBlue":
+    case "blueKey":
+      return "blueKey";
+    case "key-red":
+    case "keyRed":
+    case "redKey":
+      return "redKey";
+    case "smallPotion":
+      return "smallPotion";
+    case "largePotion":
+      return "largePotion";
+    case "redGem":
+    case "gemRed":
+      return "redGem";
+    case "blueGem":
+    case "gemBlue":
+      return "blueGem";
+    case "doorYellow":
+    case "yellowDoor":
+      return "yellowDoor";
+    case "doorBlue":
+    case "blueDoor":
+      return "blueDoor";
+    case "doorRed":
+    case "redDoor":
+      return "redDoor";
+    case "stairs":
+      return "stairs";
+    case "shop":
+      return "shop";
+    default:
+      return null;
+  }
 }
