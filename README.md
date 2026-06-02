@@ -4,6 +4,8 @@ OnePromptDungeon is a browser-playable, Magic Tower-like dungeon game designed f
 
 v0.5 turns the project into a sprite-driven Premium Neo-Retro Tower: a large playable 15x15 map, dense classic RPG HUD, right-side tactical panel, collapsible Wish Forge, and a PNG sprite sheet for hero, monsters, doors, items, tiles, princess, merchant, and boss.
 
+The latest v0.5 UI polish adds a dedicated PNG icon strip for the title shield and core hero stats, a single language toggle button, a clearer Floor Map legend, and tighter bottom HUD spacing.
+
 ## Play
 
 Online build:
@@ -48,9 +50,15 @@ npm test
 ## What v0.5 Includes
 
 - PNG sprite sheet rendering via `public/assets/tower-sprites-v05.png`
+- PNG UI icon strip via `public/assets/tower-ui-icons-v05.png`
 - Sprite metadata in `src/assets/sprites.ts`
+- UI icon metadata in `src/assets/uiIcons.ts`
 - Canvas `drawImage` rendering for floor, wall, doors, keys, potions, gems, monsters, hero, princess, merchant, stairs, and boss
 - UI icons and hero portrait reuse the same sprite sheet for a more coherent Magic Tower look
+- Title shield plus HP, ATK, DEF, and Gold now use PNG icons instead of CSS-only shapes
+- Single title-bar language toggle instead of separate Chinese and English buttons
+- Floor Map now includes a compact legend for hero, stairs, shop, enemy, princess, key, door, and treasure
+- Bottom Merchant and Route Hint panels have tighter spacing and more even width allocation
 - Classic dark tower HUD refinements to move away from generic modern web UI
 - Premium Neo-Retro Tower UI inspired by classic tower RPGs, rebuilt with a larger map-first layout
 - Collapsible `Wish Forge` drawer for Wish, Seed, Difficulty, Generate, Export JSON, and Share Link

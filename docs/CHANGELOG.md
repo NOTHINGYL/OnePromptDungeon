@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.1
+
+UI icon and layout polish.
+
+- Added `public/assets/tower-ui-icons-v05.png` for the title shield and HP/ATK/DEF/Gold icons.
+- Added UI icon metadata in `src/assets/uiIcons.ts`.
+- Collapsed the language controls into a single toggle button.
+- Added a compact Floor Map legend and adjusted minimap sizing to avoid clipping.
+- Rebalanced the bottom HUD widths and refined Merchant upgrade card spacing.
+- Added local planning notes for this small UI polish pass.
+
 ## v0.5.0
 
 PNG sprite sheet and design-match tower UI.

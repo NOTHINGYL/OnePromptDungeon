@@ -11,6 +11,7 @@ import {
   type Language,
 } from "./i18n";
 import { spriteStyle, type SpriteName } from "./assets/sprites";
+import { isUiIcon, uiIconStyle } from "./assets/uiIcons";
 import { GameCanvas, type TowerTheme } from "./ui/GameCanvas";
 import type { CellContent, Difficulty, FloorState, LogEntry, ShopUpgrade, TowerState } from "./types/game";
 
@@ -155,7 +156,7 @@ export default function App() {
       <section className="game-window" aria-label="OnePromptDungeon">
         <header className="window-titlebar">
           <div className="brand-block">
-            <span className="brand-shield" />
+            <SpriteIcon kind="brandShield" width={38} height={38} />
             <strong>{t("app.title")}</strong>
           </div>
           <div className="floor-title">
@@ -167,7 +168,6 @@ export default function App() {
           </div>
           <div className="window-actions">
             <button type="button" onClick={toggleLanguage}>{t("button.language")}</button>
-            <button type="button" aria-pressed={language === "en"} onClick={() => setLanguage("en")}>EN</button>
             <button type="button" onClick={toggleTheme}>{theme === "classic-dark" ? "☀" : "☾"}</button>
             <button type="button" onClick={restart}>↻ {t("button.restart")}</button>
             <button type="button" onClick={undoStep} disabled={tower.history.length === 0}>↶ {t("button.undo")}</button>
@@ -385,12 +385,39 @@ function TacticalPanel({
       </section>
       <section className="minimap-card frame-panel">
         <h2>{t("map.title")}</h2>
-        <MiniMap floor={floor} tower={tower} />
+        <div className="minimap-body">
+          <MiniMap floor={floor} tower={tower} />
+          <MiniLegend t={t} />
+        </div>
       </section>
       <button className="seed-badge" type="button" onClick={openForge}>
         ◈ {t("app.seed")} <strong>{seed}</strong>
       </button>
     </>
+  );
+}
+
+function MiniLegend({ t }: { t: (key: string, params?: Record<string, string | number>) => string }) {
+  const entries = [
+    ["hero", "legend.you"],
+    ["stairs", "legend.stairs"],
+    ["shop", "legend.shop"],
+    ["enemy", "legend.enemy"],
+    ["princess", "legend.princess"],
+    ["key", "legend.key"],
+    ["door", "legend.door"],
+    ["treasure", "legend.treasure"],
+  ];
+
+  return (
+    <ul className="mini-legend" aria-hidden="true">
+      {entries.map(([kind, label]) => (
+        <li key={kind}>
+          <span className={`legend-dot ${kind}`} />
+          <span>{t(label)}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -577,6 +604,12 @@ function Meter({ max, value }: { max: number; value: number }) {
 }
 
 function SpriteIcon({ height, kind, width }: { height?: number; kind: string; width?: number }) {
+  if (isUiIcon(kind)) {
+    const displayWidth = width ?? (kind === "brandShield" ? 34 : 30);
+    const displayHeight = height ?? (kind === "brandShield" ? 36 : 30);
+    return <i className="sprite sprite-ui-icon" style={uiIconStyle(kind, displayWidth, displayHeight)} aria-hidden="true" />;
+  }
+
   const sheetName = toSheetSprite(kind);
   if (sheetName) {
     const displayWidth = width ?? (sheetName === "heroPortrait" ? 122 : sheetName === "towerWarden" ? 48 : 30);
