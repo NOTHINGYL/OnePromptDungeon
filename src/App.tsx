@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ITEMS, MONSTERS, SHOP_COST, SHOP_UPGRADES } from "./data/catalog";
 import { previewCombat } from "./engine/combat";
 import { buyUpgrade, isPlayerOnShop, moveHero, undo, type Direction } from "./engine/game";
 import { createGeneratedTower, getCurrentFloor, makeSeed, randomSeed } from "./engine/level";
+import { buildRouteHint, scanTower, summarizeSeed, type RouteHintStep, type ScannerReport, type SeedSummary } from "./engine/analysis";
 import {
   detectLanguage,
   LANG_STORAGE_KEY,
@@ -13,10 +14,25 @@ import {
 import { spriteStyle, type SpriteName } from "./assets/sprites";
 import { isUiIcon, uiIconStyle } from "./assets/uiIcons";
 import { GameCanvas, type TowerTheme } from "./ui/GameCanvas";
-import type { CellContent, Difficulty, FloorState, LogEntry, ShopUpgrade, TowerState } from "./types/game";
+import type { Difficulty, FloorState, LogEntry, ShopUpgrade, TowerState } from "./types/game";
 
 const DEFAULT_WISH = "Rescue the princess from a three-floor tower that answers wishes.";
 const DIFFICULTIES: Difficulty[] = ["easy", "normal", "hard"];
+const SAVE_STORAGE_KEY = "opd.save.v0.6";
+const HISTORY_STORAGE_KEY = "opd.seedHistory.v0.6";
+const WISH_PRESETS = [
+  { key: "preset.keyPuzzle", wish: "three-floor tower, scarce blue keys, one risky shop route", difficulty: "normal" as Difficulty },
+  { key: "preset.bossRush", wish: "boss rush tower with many fights and one treasure comeback", difficulty: "hard" as Difficulty },
+  { key: "preset.treasure", wish: "treasure-heavy tower with gems, potions, and optional monsters", difficulty: "easy" as Difficulty },
+  { key: "preset.shop", wish: "merchant economy tower, risky shop route, scarce rewards", difficulty: "normal" as Difficulty },
+];
+
+type SeedHistoryEntry = {
+  seed: string;
+  difficulty: Difficulty;
+  wish: string;
+  solvable: boolean;
+};
 
 function getInitialLanguage(): Language {
   const saved = localStorage.getItem(LANG_STORAGE_KEY);
@@ -30,10 +46,41 @@ function getInitialTheme(): TowerTheme {
 
 function createBootTower() {
   const params = new URLSearchParams(window.location.search);
+  const hasSharedTower = params.has("wish") || params.has("seed") || params.has("difficulty");
+  if (!hasSharedTower) {
+    const saved = loadSavedTower();
+    if (saved) {
+      return saved;
+    }
+  }
+
   const prompt = params.get("wish") || DEFAULT_WISH;
   const seed = params.get("seed") || makeSeed(prompt);
   const difficulty = parseDifficulty(params.get("difficulty"));
   return createGeneratedTower({ prompt, seed, difficulty });
+}
+
+function loadSavedTower() {
+  try {
+    const saved = localStorage.getItem(SAVE_STORAGE_KEY);
+    if (!saved) {
+      return null;
+    }
+    const parsed = JSON.parse(saved) as TowerState;
+    return parsed?.seed && Array.isArray(parsed.floors) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function loadSeedHistory(): SeedHistoryEntry[] {
+  try {
+    const saved = localStorage.getItem(HISTORY_STORAGE_KEY);
+    const parsed = saved ? (JSON.parse(saved) as SeedHistoryEntry[]) : [];
+    return Array.isArray(parsed) ? parsed.slice(0, 5) : [];
+  } catch {
+    return [];
+  }
 }
 
 export default function App() {
@@ -45,6 +92,7 @@ export default function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>(tower.difficulty);
   const [forgeOpen, setForgeOpen] = useState(false);
   const [generatorStatus, setGeneratorStatus] = useState("generator.ready");
+  const [seedHistory, setSeedHistory] = useState<SeedHistoryEntry[]>(loadSeedHistory);
 
   const floor = getCurrentFloor(tower);
   const onShop = isPlayerOnShop(tower);
@@ -59,12 +107,22 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
+  useEffect(() => {
+    localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(tower));
+  }, [tower]);
+
+  useEffect(() => {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(seedHistory));
+  }, [seedHistory]);
+
   const move = useCallback((direction: Direction) => {
     setTower((current) => moveHero(current, direction));
   }, []);
 
   const restart = () => {
-    setTower(createGeneratedTower({ prompt: wish, seed, difficulty }));
+    const nextTower = createGeneratedTower({ prompt: wish, seed, difficulty });
+    setTower(nextTower);
+    addSeedHistory(nextTower);
     setGeneratorStatus("generator.restarted");
   };
 
@@ -73,6 +131,7 @@ export default function App() {
     const nextTower = createGeneratedTower({ prompt: wish, seed: nextSeed, difficulty });
     setTower(nextTower);
     setSeed(nextTower.seed);
+    addSeedHistory(nextTower);
     setGeneratorStatus("generator.generated");
   };
 
@@ -99,6 +158,35 @@ export default function App() {
   const exportTower = async () => {
     await navigator.clipboard?.writeText(JSON.stringify(tower, null, 2));
     setGeneratorStatus("generator.exportCopied");
+  };
+
+  const applyPreset = (preset: (typeof WISH_PRESETS)[number]) => {
+    setWish(preset.wish);
+    setDifficulty(preset.difficulty);
+    setSeed(makeSeed(preset.wish));
+    setGeneratorStatus("generator.presetReady");
+  };
+
+  const restoreSeed = (entry: SeedHistoryEntry) => {
+    const nextTower = createGeneratedTower({ prompt: entry.wish, seed: entry.seed, difficulty: entry.difficulty });
+    setWish(entry.wish);
+    setSeed(entry.seed);
+    setDifficulty(entry.difficulty);
+    setTower(nextTower);
+    setGeneratorStatus("generator.restored");
+  };
+
+  const addSeedHistory = (nextTower: TowerState) => {
+    const summary = summarizeSeed(nextTower);
+    setSeedHistory((current) => [
+      {
+        seed: nextTower.seed,
+        difficulty: nextTower.difficulty,
+        wish: nextTower.prompt,
+        solvable: summary.solvable,
+      },
+      ...current.filter((entry) => entry.seed !== nextTower.seed),
+    ].slice(0, 5));
   };
 
   useEffect(() => {
@@ -142,6 +230,9 @@ export default function App() {
   }, [move, undoStep]);
 
   const monsterForecast = useMemo(() => getMonsterForecast(tower, floor), [floor, tower]);
+  const scanner = useMemo(() => scanTower(tower, floor), [floor, tower]);
+  const seedSummary = useMemo(() => summarizeSeed(tower), [tower]);
+  const routeHint = useMemo(() => buildRouteHint(tower, floor, scanner), [floor, scanner, tower]);
 
   const toggleLanguage = () => {
     setLanguage((current) => (current === "zh" ? "en" : "zh"));
@@ -243,14 +334,19 @@ export default function App() {
                 exportTower={exportTower}
                 generateTower={generateTower}
                 generatorStatus={t(generatorStatus)}
+                seedHistory={seedHistory}
+                seedSummary={seedSummary}
                 rerollSeed={rerollSeed}
+                restoreSeed={restoreSeed}
                 seed={seed}
+                presets={WISH_PRESETS}
                 setDifficulty={setDifficulty}
                 setSeed={setSeed}
                 setWish={setWish}
                 shareTower={shareTower}
                 t={t}
                 wish={wish}
+                applyPreset={applyPreset}
                 close={() => setForgeOpen(false)}
               />
             ) : (
@@ -258,7 +354,9 @@ export default function App() {
                 floor={floor}
                 monsterForecast={monsterForecast}
                 openForge={() => setForgeOpen(true)}
+                scanner={scanner}
                 seed={tower.seed}
+                seedSummary={seedSummary}
                 t={t}
                 tower={tower}
               />
@@ -314,22 +412,7 @@ export default function App() {
 
           <section className="route-panel frame-panel">
             <h2>{t("route.title")}</h2>
-            <div className="route-icons">
-              <SpriteIcon kind="hero" />
-              <span>→</span>
-              <SpriteIcon kind="keyYellow" />
-              <span>→</span>
-              <SpriteIcon kind="doorYellow" />
-              <span>→</span>
-              <SpriteIcon kind="stairs" />
-            </div>
-            <div className="route-icons">
-              <SpriteIcon kind="bat" />
-              <span>→</span>
-              <SpriteIcon kind="gemRed" />
-              <span>→</span>
-              <SpriteIcon kind="princess" />
-            </div>
+            <RouteHint rows={routeHint} t={t} />
           </section>
         </footer>
       </section>
@@ -341,14 +424,18 @@ function TacticalPanel({
   floor,
   monsterForecast,
   openForge,
+  scanner,
   seed,
+  seedSummary,
   t,
   tower,
 }: {
   floor: FloorState;
   monsterForecast: ReturnType<typeof getMonsterForecast>;
   openForge: () => void;
+  scanner: ScannerReport;
   seed: string;
+  seedSummary: SeedSummary;
   t: (key: string, params?: Record<string, string | number>) => string;
   tower: TowerState;
 }) {
@@ -383,11 +470,19 @@ function TacticalPanel({
           <p className="empty-note">{t("fight.none")}</p>
         )}
       </section>
-      <section className="minimap-card frame-panel">
-        <h2>{t("map.title")}</h2>
-        <div className="minimap-body">
-          <MiniMap floor={floor} tower={tower} />
-          <MiniLegend t={t} />
+      <section className="scanner-card frame-panel">
+        <h2>{t("scanner.title")}</h2>
+        <div className="scanner-grid">
+          <ScanMetric label={t("scanner.reachable")} value={`${scanner.reachablePercent}%`} tone={scanner.reachablePercent > 50 ? "good" : "warn"} />
+          <ScanMetric label={t("scanner.safeFights")} value={scanner.safeFights} tone={scanner.safeFights > 0 ? "good" : "warn"} />
+          <ScanMetric label={t("scanner.keys")} value={`${scanner.remainingKeys.yellow}/${scanner.remainingKeys.blue}/${scanner.remainingKeys.red}`} />
+          <ScanMetric label={t("scanner.doors")} value={`${scanner.blockedDoors.yellow}/${scanner.blockedDoors.blue}/${scanner.blockedDoors.red}`} tone="warn" />
+          <ScanMetric label={t("scanner.solvable")} value={seedSummary.solvable ? t("scanner.yes") : t("scanner.no")} tone={seedSummary.solvable ? "good" : "bad"} />
+        </div>
+        <div className="scanner-next">
+          <SpriteIcon kind={scanner.nextTarget.icon} />
+          <span>{t("scanner.next")}</span>
+          <strong className={scanner.nextTarget.tone}>{t(scanner.nextTarget.key)}</strong>
         </div>
       </section>
       <button className="seed-badge" type="button" onClick={openForge}>
@@ -397,38 +492,28 @@ function TacticalPanel({
   );
 }
 
-function MiniLegend({ t }: { t: (key: string, params?: Record<string, string | number>) => string }) {
-  const entries = [
-    ["hero", "legend.you"],
-    ["stairs", "legend.stairs"],
-    ["shop", "legend.shop"],
-    ["enemy", "legend.enemy"],
-    ["princess", "legend.princess"],
-    ["key", "legend.key"],
-    ["door", "legend.door"],
-    ["treasure", "legend.treasure"],
-  ];
-
+function ScanMetric({ label, tone, value }: { label: string; tone?: "good" | "warn" | "bad"; value: string | number }) {
   return (
-    <ul className="mini-legend" aria-hidden="true">
-      {entries.map(([kind, label]) => (
-        <li key={kind}>
-          <span className={`legend-dot ${kind}`} />
-          <span>{t(label)}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="scan-metric">
+      <span>{label}</span>
+      <strong className={tone}>{value}</strong>
+    </div>
   );
 }
 
 function WishForge({
+  applyPreset,
   close,
   difficulty,
   exportTower,
   generateTower,
   generatorStatus,
+  presets,
   rerollSeed,
+  restoreSeed,
   seed,
+  seedHistory,
+  seedSummary,
   setDifficulty,
   setSeed,
   setWish,
@@ -436,13 +521,18 @@ function WishForge({
   t,
   wish,
 }: {
+  applyPreset: (preset: (typeof WISH_PRESETS)[number]) => void;
   close: () => void;
   difficulty: Difficulty;
   exportTower: () => void;
   generateTower: () => void;
   generatorStatus: string;
+  presets: typeof WISH_PRESETS;
   rerollSeed: () => void;
+  restoreSeed: (entry: SeedHistoryEntry) => void;
   seed: string;
+  seedHistory: SeedHistoryEntry[];
+  seedSummary: SeedSummary;
   setDifficulty: (difficulty: Difficulty) => void;
   setSeed: (seed: string) => void;
   setWish: (wish: string) => void;
@@ -457,9 +547,16 @@ function WishForge({
           <h2>◈ {t("forge.title")}</h2>
           <button type="button" onClick={close}>×</button>
         </div>
+        <div className="preset-grid">
+          {presets.map((preset) => (
+            <button key={preset.key} type="button" onClick={() => applyPreset(preset)}>
+              {t(preset.key)}
+            </button>
+          ))}
+        </div>
         <label>
           <span>{t("forge.wish")}</span>
-          <textarea value={wish} onChange={(event) => setWish(event.target.value)} rows={4} />
+          <textarea value={wish} onChange={(event) => setWish(event.target.value)} rows={2} />
         </label>
         <label>
           <span>{t("forge.seed")}</span>
@@ -475,7 +572,22 @@ function WishForge({
             </button>
           ))}
         </div>
+        <div className="forge-report">
+          <strong>{t("report.title")}</strong>
+          <span>{t("report.solvable")}: <b className={seedSummary.solvable ? "good" : "bad"}>{seedSummary.solvable ? t("scanner.yes") : t("scanner.no")}</b></span>
+          <span>{t("report.shape")}: {seedSummary.totalKeys}K / {seedSummary.totalDoors}D / {seedSummary.totalMonsters}M</span>
+          <span>{seedSummary.style.map((style) => t(style)).join(" · ")}</span>
+        </div>
         <button className="generate-button" type="button" onClick={generateTower}>✦ {t("forge.generate")}</button>
+        <div className="seed-history">
+          <strong>{t("history.title")}</strong>
+          {seedHistory.length > 0 ? seedHistory.map((entry) => (
+            <button key={`${entry.seed}-${entry.difficulty}`} type="button" onClick={() => restoreSeed(entry)}>
+              <span>{entry.seed}</span>
+              <small>{t(`difficulty.${entry.difficulty}`)} · {entry.solvable ? t("scanner.yes") : t("scanner.no")}</small>
+            </button>
+          )) : <span className="empty-note">{t("history.empty")}</span>}
+        </div>
         <div className="forge-actions">
           <button type="button" onClick={exportTower}>{t("forge.export")}</button>
           <button type="button" onClick={shareTower}>{t("forge.share")}</button>
@@ -489,16 +601,22 @@ function WishForge({
   );
 }
 
-function MiniMap({ floor, tower }: { floor: FloorState; tower: TowerState }) {
+function RouteHint({ rows, t }: { rows: RouteHintStep[][]; t: (key: string, params?: Record<string, string | number>) => string }) {
   return (
-    <div className="minimap-grid" aria-hidden="true">
-      {floor.tiles.flatMap((row, y) =>
-        row.map((tile, x) => {
-          const content = floor.contents[y][x];
-          const isHero = tower.player.x === x && tower.player.y === y;
-          return <span key={`${x}-${y}`} className={`mini ${isHero ? "hero" : getMiniClass(tile, content)}`} />;
-        }),
-      )}
+    <div className="route-hint-body">
+      {rows.map((row, rowIndex) => (
+        <div className="route-icons" key={rowIndex}>
+          {row.map((step, index) => (
+            <Fragment key={`${step.icon}-${index}`}>
+              <span className="route-step">
+                <SpriteIcon kind={step.icon} />
+                <small className={step.tone}>{t(step.key)}</small>
+              </span>
+              {index < row.length - 1 ? <b className="route-arrow" key={`${step.icon}-${index}-arrow`}>→</b> : null}
+            </Fragment>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
@@ -530,17 +648,6 @@ function getMonsterForecast(tower: TowerState, floor: FloorState) {
   }
 
   return null;
-}
-
-function getMiniClass(tile: string, content: CellContent) {
-  if (content.type === "monster") return "enemy";
-  if (content.type === "princess") return "princess";
-  if (content.type === "shop") return "shop";
-  if (content.type === "item") return content.item.endsWith("Key") ? "key" : "treasure";
-  if (content.type === "stairsUp" || content.type === "stairsDown") return "stairs";
-  if (tile === "wall") return "wall";
-  if (tile.endsWith("Door")) return "door";
-  return "floor";
 }
 
 function formatLog(entry: LogEntry, t: (key: string, params?: Record<string, string | number>) => string) {

@@ -395,6 +395,7 @@ dd {
 .objective-card,
 .monster-card,
 .minimap-card,
+.scanner-card,
 .forge-panel,
 .generator-status,
 .forecast-panel,
@@ -538,6 +539,10 @@ canvas {
   color: var(--green);
 }
 
+.warn {
+  color: var(--gold);
+}
+
 .danger-ribbon,
 .bad {
   color: var(--red);
@@ -561,6 +566,67 @@ canvas {
   justify-content: space-between;
   color: var(--text);
   font-size: 0.9rem;
+}
+
+.scanner-card {
+  display: grid;
+  grid-template-rows: auto auto auto auto;
+  align-content: start;
+  gap: 8px;
+}
+
+.scanner-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.scan-metric {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 5px 6px;
+  border: 1px solid rgba(255, 210, 111, 0.2);
+  background: rgba(4, 11, 14, 0.42);
+}
+
+.scan-metric span,
+.scanner-next span,
+.seed-summary-mini span {
+  color: #a8c0b3;
+  font-size: 0.66rem;
+  line-height: 1;
+}
+
+.scan-metric strong {
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1;
+}
+
+.scanner-next,
+.seed-summary-mini {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 28px auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  padding-top: 3px;
+  color: var(--text);
+}
+
+.seed-summary-mini {
+  grid-template-columns: auto minmax(0, 1fr);
+  border-top: 1px solid rgba(255, 214, 138, 0.13);
+  padding-top: 7px;
+}
+
+.scanner-next strong,
+.seed-summary-mini strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .minimap-body {
@@ -699,7 +765,8 @@ canvas {
 .forge-panel {
   display: grid;
   align-content: start;
-  gap: 14px;
+  gap: 8px;
+  overflow: auto;
 }
 
 .forge-heading {
@@ -721,10 +788,26 @@ canvas {
 
 .forge-panel label {
   display: grid;
-  gap: 7px;
+  gap: 5px;
   color: #21d9ff;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.forge-panel textarea {
+  padding: 8px 10px;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.preset-grid button {
+  min-height: 30px;
+  padding: 0 6px;
+  font-size: 0.82rem;
 }
 
 .seed-input {
@@ -747,7 +830,10 @@ canvas {
 }
 
 .generate-button {
-  min-height: 54px;
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  min-height: 42px;
   border-color: #00d9ff;
   color: #74efff;
   font-size: 1.15rem;
@@ -755,6 +841,51 @@ canvas {
   box-shadow:
     inset 0 0 22px rgba(0, 217, 255, 0.24),
     0 0 24px rgba(0, 217, 255, 0.24);
+}
+
+.forge-report,
+.seed-history {
+  display: grid;
+  gap: 4px;
+  padding: 7px 8px;
+  border: 1px solid rgba(255, 210, 111, 0.2);
+  background: rgba(4, 11, 14, 0.38);
+}
+
+.forge-report strong,
+.seed-history strong {
+  color: #35e2ff;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+}
+
+.forge-report span {
+  color: var(--text);
+  font-size: 0.78rem;
+  line-height: 1.16;
+}
+
+.seed-history button {
+  min-height: 30px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 4px 7px;
+  text-align: left;
+}
+
+.seed-history button span {
+  color: #7ee7ff;
+  font-size: 0.82rem;
+}
+
+.seed-history button small {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .forge-actions {
@@ -852,14 +983,35 @@ canvas {
 
 .route-icons {
   display: grid;
-  grid-template-columns: repeat(7, minmax(20px, max-content));
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-evenly;
-  gap: 6px;
-  margin-top: 11px;
+  gap: 8px;
+  margin-top: 10px;
+  color: #29e8ff;
+  font-weight: 900;
+}
+
+.route-step {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+}
+
+.route-arrow {
   color: #29e8ff;
   font-size: 1.2rem;
-  font-weight: 900;
+}
+
+.route-step small {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.68rem;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .empty-note {
@@ -1133,6 +1285,7 @@ canvas {
   .objective-card,
   .monster-card,
   .minimap-card,
+  .scanner-card,
   .forge-panel,
   .generator-status,
   .forecast-panel,
@@ -1251,6 +1404,7 @@ canvas {
   .objective-card,
   .monster-card,
   .minimap-card,
+  .scanner-card,
   .forge-panel,
   .generator-status,
   .forecast-panel,
@@ -1301,6 +1455,29 @@ canvas {
   .mini-legend {
     gap: 2px;
     font-size: 0.72rem;
+  }
+
+  .scanner-card {
+    gap: 6px;
+  }
+
+  .scanner-grid {
+    gap: 5px;
+    margin-top: 5px;
+  }
+
+  .scan-metric {
+    padding: 5px 6px;
+  }
+
+  .scan-metric span,
+  .scanner-next span,
+  .seed-summary-mini span {
+    font-size: 0.68rem;
+  }
+
+  .scan-metric strong {
+    font-size: 0.82rem;
   }
 
   .seed-badge {

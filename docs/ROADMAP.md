@@ -54,16 +54,25 @@ Goal: make the playable app look much closer to the design mockups by moving cha
 - Refine classic dark tower UI away from modern web styling
 - Keep 1280x720 desktop no-scroll checks
 
-## v0.6 - Stronger Local Generator
+## v0.6 - Route Scanner and Better Local Generator
 
-Goal: make generated towers feel less template-like and easier to share.
+Goal: make generated towers easier to understand, compare, and share as route puzzles.
 
 - Add named generator presets
-- Add import JSON
-- Add seed gallery examples
-- Add basic reachability/solvability report
-- Add route pressure score and generated tower summary
-- Add optional animated README GIF
+- Replace Floor Map with Tower Scanner
+- Add reachable area, safe fight, key economy, blocked door, next target, and solvability summaries
+- Add dynamic route hints
+- Add recent seed history and local save
+- Add basic analysis tests
+
+## v0.6.x - Shareability Polish
+
+Goal: improve sharing and onboarding around generated towers.
+
+- Import tower JSON
+- Curated seed gallery examples
+- Route pressure score
+- Optional animated README GIF
 
 ## v0.7 - Optional AI Mode
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.6.0
+
+Route scanner and better local generator.
+
+- Replaced the right-side Floor Map with `Tower Scanner`.
+- Added `src/engine/analysis.ts` for reachable-area scans, key economy, safe fight counts, next target hints, and seed summaries.
+- Added dynamic Route Hint rows generated from current tower state.
+- Added Wish Forge presets for Key Puzzle, Boss Rush, Treasure, and Shop Route.
+- Added a solvability report, seed shape summary, and recent seed history in Wish Forge.
+- Added local save/restore for the current tower via `localStorage`.
+- Added analysis unit tests.
+- Updated README, roadmap, package version, and local v0.6 notes.
+
 ## v0.5.1
 
 UI icon and layout polish.

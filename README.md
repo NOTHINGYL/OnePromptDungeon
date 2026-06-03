@@ -1,10 +1,8 @@
 # OnePromptDungeon
 
-OnePromptDungeon is a browser-playable, Magic Tower-like dungeon game designed for GitHub Pages.
+OnePromptDungeon is a browser-playable, Magic Tower-like route puzzle designed for GitHub Pages.
 
-v0.5 turns the project into a sprite-driven Premium Neo-Retro Tower: a large playable 15x15 map, dense classic RPG HUD, right-side tactical panel, collapsible Wish Forge, and a PNG sprite sheet for hero, monsters, doors, items, tiles, princess, merchant, and boss.
-
-The latest v0.5 UI polish adds a dedicated PNG icon strip for the title shield and core hero stats, a single language toggle button, a clearer Floor Map legend, and tighter bottom HUD spacing.
+v0.6 turns the project into a local seed-generation and route-analysis game: `Wish Forge` can shape a reproducible three-floor tower, `Tower Scanner` reads the current route pressure, and dynamic route hints help players reason about keys, doors, safe fights, shops, and stairs.
 
 ## Play
 
@@ -47,6 +45,17 @@ npm test
 - Shop: stand on the merchant tile and buy ATK, DEF, or HP upgrades
 - Goal: climb to 3F, defeat the Crystal Warden, and rescue the princess
 
+## What v0.6 Includes
+
+- `Tower Scanner` replaces the low-value Floor Map with reachable area, safe fights, key economy, blocked doors, next target, and solvability status
+- Dynamic Route Hint generated from the current tower state instead of fixed decorative icons
+- Wish Forge presets: Key Puzzle, Boss Rush, Treasure, and Shop Route
+- Solvability report and seed shape summary inside Wish Forge
+- Recent seed history with one-click restore
+- Local save: the current tower is saved in `localStorage` and restored on refresh
+- New `src/engine/analysis.ts` module for scanner, seed summary, and route hint logic
+- Added analysis tests for scanner and seed summaries
+
 ## What v0.5 Includes
 
 - PNG sprite sheet rendering via `public/assets/tower-sprites-v05.png`
@@ -57,14 +66,13 @@ npm test
 - UI icons and hero portrait reuse the same sprite sheet for a more coherent Magic Tower look
 - Title shield plus HP, ATK, DEF, and Gold now use PNG icons instead of CSS-only shapes
 - Single title-bar language toggle instead of separate Chinese and English buttons
-- Floor Map now includes a compact legend for hero, stairs, shop, enemy, princess, key, door, and treasure
 - Bottom Merchant and Route Hint panels have tighter spacing and more even width allocation
 - Classic dark tower HUD refinements to move away from generic modern web UI
 - Premium Neo-Retro Tower UI inspired by classic tower RPGs, rebuilt with a larger map-first layout
 - Collapsible `Wish Forge` drawer for Wish, Seed, Difficulty, Generate, Export JSON, and Share Link
-- Local seed generator: `Wish + Seed + Difficulty + v0.5` creates reproducible three-floor towers
+- Local seed generator: `Wish + Seed + Difficulty` creates reproducible three-floor towers
 - Prompt keyword handling for routes such as scarce blue keys, risky shops, boss rush, treasure, and defense paths
-- Right-side tactical panel with objective, monster forecast, minimap, and seed badge
+- Right-side tactical panel with objective, monster forecast, tower scanner, and seed badge
 - Bottom HUD for battle forecast, merchant choices, tower log, and route hint
 - Full Chinese/English UI switch with saved preference
 - Classic light/dark theme switch with saved preference
@@ -92,7 +100,7 @@ The project is inspired by deterministic tower RPGs: the fun comes from route pl
 - v0.3: Classic Magic Tower-style UI, bilingual text, and light/dark themes
 - v0.4: Premium Neo-Retro UI, Wish Forge drawer, local seed generator
 - v0.5: PNG sprite sheet, design-match tower UI, stronger visual identity
-- v0.6: Stronger generator presets, solvability reports, import/export polish
+- v0.6: Tower Scanner, dynamic route hints, generator presets, seed history, local save
 - v0.7: Optional AI mode for story/theme/level JSON generation
 
 More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
@@ -103,7 +111,7 @@ More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 src/
   assets/     Sprite sheet metadata
   data/       Item, monster, and shop catalog
-  engine/     Combat, tower movement, shops, undo, and local seed generation
+  engine/     Combat, tower movement, shops, undo, local seed generation, and route analysis
   types/      Shared game types
   i18n.ts     Chinese/English translation dictionary
   ui/         Canvas board renderer
