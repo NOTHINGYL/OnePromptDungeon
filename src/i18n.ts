@@ -10,6 +10,8 @@ export type TranslationKey =
   | "button.undo"
   | "button.shuffle"
   | "button.language"
+  | "button.soundOn"
+  | "button.soundOff"
   | "button.theme"
   | "status.hero"
   | "status.floor"
@@ -29,6 +31,8 @@ export type TranslationKey =
   | "fight.danger"
   | "fight.loss"
   | "fight.reward"
+  | "book.title"
+  | "book.empty"
   | "shop.title"
   | "shop.cost"
   | "log.title"
@@ -37,6 +41,15 @@ export type TranslationKey =
   | "overlay.victorySub"
   | "overlay.fallen"
   | "overlay.fallenSub"
+  | "result.victory"
+  | "result.victorySub"
+  | "result.fallen"
+  | "result.fallenSub"
+  | "result.moves"
+  | "result.defeated"
+  | "result.doors"
+  | "result.shops"
+  | "result.close"
   | `floor.${string}.title`
   | `floor.${string}.objective`
   | `monster.${MonsterKind}`
@@ -51,13 +64,15 @@ export const THEME_STORAGE_KEY = "opd.theme";
 
 const dictionary: Record<Language, Record<string, string>> = {
   en: {
-    "app.version": "v0.6 / Route scanner tower",
+    "app.version": "v0.7 / Combat feel tower",
     "app.title": "OnePromptDungeon",
     "app.seed": "Seed",
     "button.restart": "Restart",
     "button.undo": "Undo Z",
     "button.shuffle": "Shuffle Text",
     "button.language": "中文",
+    "button.soundOn": "SFX",
+    "button.soundOff": "Mute",
     "button.theme": "Theme",
     "status.hero": "Hero",
     "status.floor": "Floor",
@@ -148,6 +163,8 @@ const dictionary: Record<Language, Record<string, string>> = {
     "fight.danger": "Do not fight",
     "fight.loss": "Loss",
     "fight.reward": "Reward",
+    "book.title": "Monster Book",
+    "book.empty": "No monsters remain on this floor.",
     "shop.title": "Merchant",
     "shop.cost": "20 gold each",
     "log.title": "Tower log",
@@ -156,6 +173,15 @@ const dictionary: Record<Language, Record<string, string>> = {
     "overlay.victorySub": "The princess is free.",
     "overlay.fallen": "FALLEN",
     "overlay.fallenSub": "Undo and choose another route.",
+    "result.victory": "Tower Cleared",
+    "result.victorySub": "The princess is free. Share this seed or rerun it with a tighter route.",
+    "result.fallen": "Run Failed",
+    "result.fallenSub": "The tower is still solvable. Undo or restart with what you learned.",
+    "result.moves": "Moves",
+    "result.defeated": "Defeated",
+    "result.doors": "Doors",
+    "result.shops": "Shops",
+    "result.close": "Close",
     "floor.floor-1.title": "1F Stone Gate",
     "floor.floor-1.objective": "Learn the tower route: collect keys, gems, and reach the upper stairs.",
     "floor.floor-2.title": "2F Merchant Hall",
@@ -219,13 +245,15 @@ const dictionary: Record<Language, Record<string, string>> = {
     "log.undid": "Undid the last step.",
   },
   zh: {
-    "app.version": "v0.6 / 路线扫描魔塔",
+    "app.version": "v0.7 / 战斗手感魔塔",
     "app.title": "OnePromptDungeon",
     "app.seed": "种子",
     "button.restart": "重开",
     "button.undo": "撤销 Z",
     "button.shuffle": "换一句",
     "button.language": "EN",
+    "button.soundOn": "音效",
+    "button.soundOff": "静音",
     "button.theme": "主题",
     "status.hero": "勇士",
     "status.floor": "楼层",
@@ -316,6 +344,8 @@ const dictionary: Record<Language, Record<string, string>> = {
     "fight.danger": "危险",
     "fight.loss": "损血",
     "fight.reward": "收益",
+    "book.title": "怪物图鉴",
+    "book.empty": "本层已经没有怪物。",
     "shop.title": "商人",
     "shop.cost": "每次 20 金币",
     "log.title": "塔内记录",
@@ -324,6 +354,15 @@ const dictionary: Record<Language, Record<string, string>> = {
     "overlay.victorySub": "公主已经获救。",
     "overlay.fallen": "失败",
     "overlay.fallenSub": "撤销一步，换条路线。",
+    "result.victory": "通关成功",
+    "result.victorySub": "公主已经获救。可以分享这个种子，或尝试更优路线。",
+    "result.fallen": "挑战失败",
+    "result.fallenSub": "这座塔仍然可解。撤销一步或重开后重新规划。",
+    "result.moves": "步数",
+    "result.defeated": "击败",
+    "result.doors": "开门",
+    "result.shops": "交易",
+    "result.close": "关闭",
     "floor.floor-1.title": "第 1 层 石门大厅",
     "floor.floor-1.objective": "学习路线规划：收集钥匙、宝石，找到上楼梯。",
     "floor.floor-2.title": "第 2 层 商人回廊",

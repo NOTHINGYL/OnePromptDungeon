@@ -1020,6 +1020,138 @@ canvas {
   line-height: 1.3;
 }
 
+.inline-panel-button {
+  min-height: 24px;
+  margin-left: 8px;
+  padding: 0 8px;
+  border-color: #0bbfeb;
+  color: #7ee7ff;
+  font-size: 0.7rem;
+  line-height: 1;
+  vertical-align: middle;
+  box-shadow:
+    inset 0 0 12px rgba(0, 213, 255, 0.18),
+    0 0 10px rgba(0, 213, 255, 0.18);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.58);
+}
+
+.modal-panel {
+  width: min(720px, 96vw);
+  max-height: min(680px, 90dvh);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 50% 0, rgba(0, 212, 255, 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(255, 211, 104, 0.08), transparent 30%),
+    #071216;
+  box-shadow:
+    0 0 0 2px #080503,
+    0 0 0 5px #9a6426,
+    0 24px 80px rgba(0, 0, 0, 0.72);
+}
+
+.modal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 214, 138, 0.16);
+  padding-bottom: 10px;
+}
+
+.modal-heading h2 {
+  color: #1fd7ff;
+  font-size: 1.25rem;
+}
+
+.modal-heading button {
+  width: 34px;
+  min-height: 30px;
+  padding: 0;
+}
+
+.monster-book-list {
+  display: grid;
+  gap: 8px;
+}
+
+.monster-book-row {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 210, 111, 0.2);
+  background: rgba(3, 11, 14, 0.54);
+}
+
+.monster-book-row strong,
+.monster-book-row span {
+  display: block;
+}
+
+.monster-book-row strong {
+  color: #ffe0a2;
+}
+
+.monster-book-row span,
+.monster-book-row em {
+  color: var(--text);
+  font-size: 0.86rem;
+  font-style: normal;
+}
+
+.result-panel p {
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.result-metric {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 210, 111, 0.22);
+  background: rgba(3, 11, 14, 0.52);
+}
+
+.result-metric span {
+  color: #8cecff;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.result-metric strong {
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-actions {
+  display: flex;
+  justify-content: end;
+  gap: 10px;
+}
+
 .sprite {
   position: relative;
   width: 28px;

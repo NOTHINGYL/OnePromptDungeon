@@ -74,7 +74,17 @@ Goal: improve sharing and onboarding around generated towers.
 - Route pressure score
 - Optional animated README GIF
 
-## v0.7 - Optional AI Mode
+## v0.7 - Game Feel Pass
+
+Goal: make the tower feel more like a game instead of a static route planner.
+
+- Add movement outcome feedback for combat, pickups, doors, blocked moves, stairs, shops, undo, victory, and failure
+- Add local SFX with a saved mute toggle
+- Add a current-floor Monster Book
+- Add victory/failure run summary panels
+- Track defeated monsters, opened doors, pickups, and shop purchases in undoable tower state
+
+## v0.8 - Optional AI Mode
 
 Goal: let LLMs produce flavor and structured level data while the local engine remains authoritative.
 

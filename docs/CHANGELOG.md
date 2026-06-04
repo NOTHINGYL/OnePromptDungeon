@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.0
+
+Game feel pass.
+
+- Added Canvas feedback for combat hits, damage labels, pickups, door opens, blocked movement, stairs, shop purchases, undo, victory, and failure.
+- Added local Web Audio sound effects with a saved SFX mute toggle.
+- Added a floor Monster Book with remaining monster counts, stats, damage forecast, and can-win status.
+- Added victory/failure result panels with seed, difficulty, moves, HP, gold, defeated monsters, opened doors, and shop purchases.
+- Added run stats to tower state so result summaries and undo snapshots stay consistent.
+- Updated README, roadmap, package version, and local v0.7 notes.
+
 ## v0.6.1
 
 Tower Scanner layout fix.

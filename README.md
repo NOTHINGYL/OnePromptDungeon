@@ -2,7 +2,7 @@
 
 OnePromptDungeon is a browser-playable, Magic Tower-like route puzzle designed for GitHub Pages.
 
-v0.6 turns the project into a local seed-generation and route-analysis game: `Wish Forge` can shape a reproducible three-floor tower, `Tower Scanner` reads the current route pressure, and dynamic route hints help players reason about keys, doors, safe fights, shops, and stairs.
+v0.7 focuses on game feel: movement outcomes now trigger visual feedback, lightweight Web Audio sound effects, a floor Monster Book, and victory/failure run summaries while keeping the GitHub Pages build fully static.
 
 ## Play
 
@@ -41,9 +41,20 @@ npm test
 - Undo: `Z` or the `Undo` button
 - Language: use the title-bar language button to switch `中文 / English`
 - Theme: use the title-bar theme button to switch classic light/dark
+- SFX: use the title-bar sound button to toggle local Web Audio feedback
 - Wish Forge: click the `Wish Forge` button or press `I` to open the local generator
+- Monster Book: use the `Monster Book` button in Battle Forecast to inspect remaining monsters on the current floor
 - Shop: stand on the merchant tile and buy ATK, DEF, or HP upgrades
 - Goal: climb to 3F, defeat the Crystal Warden, and rescue the princess
+
+## What v0.7 Includes
+
+- Canvas feedback events for combat hits, damage numbers, item pickups, door opens, blocked movement, stairs, shop purchases, undo, victory, and failure
+- Lightweight local Web Audio sound effects with a saved SFX mute toggle
+- Floor Monster Book with remaining monster counts, stats, damage forecast, and can-win status
+- Victory/failure result panel with seed, difficulty, moves, HP, gold, defeated monsters, opened doors, and shop purchases
+- Run stats stored in tower state and restored by undo snapshots
+- Updated README, changelog, roadmap, package version, and local v0.7 notes
 
 ## What v0.6 Includes
 
@@ -101,7 +112,8 @@ The project is inspired by deterministic tower RPGs: the fun comes from route pl
 - v0.4: Premium Neo-Retro UI, Wish Forge drawer, local seed generator
 - v0.5: PNG sprite sheet, design-match tower UI, stronger visual identity
 - v0.6: Tower Scanner, dynamic route hints, generator presets, seed history, local save
-- v0.7: Optional AI mode for story/theme/level JSON generation
+- v0.7: Combat animation feedback, local SFX, Monster Book, victory/failure run summary
+- v0.8: Optional AI mode for story/theme/level JSON generation
 
 More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -109,6 +121,7 @@ More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ```txt
 src/
+  audio/      Local Web Audio sound effects
   assets/     Sprite sheet metadata
   data/       Item, monster, and shop catalog
   engine/     Combat, tower movement, shops, undo, local seed generation, and route analysis

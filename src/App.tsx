@@ -4,6 +4,7 @@ import { previewCombat } from "./engine/combat";
 import { buyUpgrade, isPlayerOnShop, moveHero, undo, type Direction } from "./engine/game";
 import { createGeneratedTower, getCurrentFloor, makeSeed, randomSeed } from "./engine/level";
 import { buildRouteHint, scanTower, summarizeSeed, type RouteHintStep, type ScannerReport, type SeedSummary } from "./engine/analysis";
+import { playSfx } from "./audio/sfx";
 import {
   detectLanguage,
   LANG_STORAGE_KEY,
@@ -15,11 +16,13 @@ import { spriteStyle, type SpriteName } from "./assets/sprites";
 import { isUiIcon, uiIconStyle } from "./assets/uiIcons";
 import { GameCanvas, type TowerTheme } from "./ui/GameCanvas";
 import type { Difficulty, FloorState, LogEntry, ShopUpgrade, TowerState } from "./types/game";
+import type { FeedbackEvent } from "./types/feedback";
 
 const DEFAULT_WISH = "Rescue the princess from a three-floor tower that answers wishes.";
 const DIFFICULTIES: Difficulty[] = ["easy", "normal", "hard"];
 const SAVE_STORAGE_KEY = "opd.save.v0.6";
 const HISTORY_STORAGE_KEY = "opd.seedHistory.v0.6";
+const SOUND_STORAGE_KEY = "opd.soundMuted.v0.7";
 const WISH_PRESETS = [
   { key: "preset.keyPuzzle", wish: "three-floor tower, scarce blue keys, one risky shop route", difficulty: "normal" as Difficulty },
   { key: "preset.bossRush", wish: "boss rush tower with many fights and one treasure comeback", difficulty: "hard" as Difficulty },
@@ -83,6 +86,10 @@ function loadSeedHistory(): SeedHistoryEntry[] {
   }
 }
 
+function getInitialSoundMuted() {
+  return localStorage.getItem(SOUND_STORAGE_KEY) === "true";
+}
+
 export default function App() {
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
   const [theme, setTheme] = useState<TowerTheme>(getInitialTheme);
@@ -93,6 +100,10 @@ export default function App() {
   const [forgeOpen, setForgeOpen] = useState(false);
   const [generatorStatus, setGeneratorStatus] = useState("generator.ready");
   const [seedHistory, setSeedHistory] = useState<SeedHistoryEntry[]>(loadSeedHistory);
+  const [soundMuted, setSoundMuted] = useState(getInitialSoundMuted);
+  const [feedback, setFeedback] = useState<FeedbackEvent | null>(null);
+  const [monsterBookOpen, setMonsterBookOpen] = useState(false);
+  const [resultDismissed, setResultDismissed] = useState(false);
 
   const floor = getCurrentFloor(tower);
   const onShop = isPlayerOnShop(tower);
@@ -115,13 +126,31 @@ export default function App() {
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(seedHistory));
   }, [seedHistory]);
 
+  useEffect(() => {
+    localStorage.setItem(SOUND_STORAGE_KEY, String(soundMuted));
+  }, [soundMuted]);
+
+  const triggerFeedback = useCallback((event: Omit<FeedbackEvent, "id">) => {
+    const nextEvent = { ...event, id: Date.now() };
+    setFeedback(nextEvent);
+    playSfx(nextEvent.kind, soundMuted);
+  }, [soundMuted]);
+
   const move = useCallback((direction: Direction) => {
-    setTower((current) => moveHero(current, direction));
-  }, []);
+    setTower((current) => {
+      const nextTower = moveHero(current, direction);
+      const event = createMoveFeedback(current, nextTower, direction);
+      if (event) {
+        triggerFeedback(event);
+      }
+      return nextTower;
+    });
+  }, [triggerFeedback]);
 
   const restart = () => {
     const nextTower = createGeneratedTower({ prompt: wish, seed, difficulty });
     setTower(nextTower);
+    setResultDismissed(false);
     addSeedHistory(nextTower);
     setGeneratorStatus("generator.restarted");
   };
@@ -130,9 +159,17 @@ export default function App() {
     const nextSeed = seed || makeSeed(wish);
     const nextTower = createGeneratedTower({ prompt: wish, seed: nextSeed, difficulty });
     setTower(nextTower);
+    setResultDismissed(false);
     setSeed(nextTower.seed);
     addSeedHistory(nextTower);
     setGeneratorStatus("generator.generated");
+    triggerFeedback({
+      kind: "stairs",
+      floorIndex: 0,
+      from: nextTower.player,
+      to: nextTower.player,
+      label: "Seed",
+    });
   };
 
   const rerollSeed = () => {
@@ -141,12 +178,44 @@ export default function App() {
   };
 
   const buy = (upgrade: ShopUpgrade) => {
-    setTower((current) => buyUpgrade(current, upgrade));
+    setTower((current) => {
+      const nextTower = buyUpgrade(current, upgrade);
+      if (nextTower.hero.gold < current.hero.gold) {
+        triggerFeedback({
+          kind: "shop",
+          floorIndex: current.currentFloorIndex,
+          from: current.player,
+          to: current.player,
+          label: t(`shop.${upgrade}.label`),
+        });
+      } else if (nextTower.log[0]?.key === "log.notEnoughGold" || nextTower.log[0]?.key === "log.noMerchant") {
+        triggerFeedback({
+          kind: "blocked",
+          floorIndex: current.currentFloorIndex,
+          from: current.player,
+          to: current.player,
+          label: t(nextTower.log[0].key),
+        });
+      }
+      return nextTower;
+    });
   };
 
   const undoStep = useCallback(() => {
-    setTower((current) => undo(current));
-  }, []);
+    setTower((current) => {
+      const nextTower = undo(current);
+      if (nextTower !== current) {
+        triggerFeedback({
+          kind: "undo",
+          floorIndex: nextTower.currentFloorIndex,
+          from: nextTower.player,
+          to: nextTower.player,
+          label: t("log.undid"),
+        });
+      }
+      return nextTower;
+    });
+  }, [t, triggerFeedback]);
 
   const shareTower = async () => {
     const params = new URLSearchParams({ seed: tower.seed, difficulty: tower.difficulty, wish: tower.prompt });
@@ -173,6 +242,7 @@ export default function App() {
     setSeed(entry.seed);
     setDifficulty(entry.difficulty);
     setTower(nextTower);
+    setResultDismissed(false);
     setGeneratorStatus("generator.restored");
   };
 
@@ -259,6 +329,9 @@ export default function App() {
           </div>
           <div className="window-actions">
             <button type="button" onClick={toggleLanguage}>{t("button.language")}</button>
+            <button type="button" onClick={() => setSoundMuted((current) => !current)}>
+              {soundMuted ? t("button.soundOff") : t("button.soundOn")}
+            </button>
             <button type="button" onClick={toggleTheme}>{theme === "classic-dark" ? "☀" : "☾"}</button>
             <button type="button" onClick={restart}>↻ {t("button.restart")}</button>
             <button type="button" onClick={undoStep} disabled={tower.history.length === 0}>↶ {t("button.undo")}</button>
@@ -323,7 +396,7 @@ export default function App() {
               <div className="coord-col" aria-hidden="true">
                 {"ABCDEFGHIJKLMNO".split("").map((letter) => <span key={letter}>{letter}</span>)}
               </div>
-              <GameCanvas floor={floor} language={language} theme={theme} tower={tower} />
+              <GameCanvas feedback={feedback} floor={floor} language={language} theme={theme} tower={tower} />
             </div>
           </section>
 
@@ -366,7 +439,7 @@ export default function App() {
 
         <footer className="bottom-panel">
           <section className="forecast-panel frame-panel">
-            <h2>{t("fight.title")}</h2>
+            <h2>{t("fight.title")} <button className="inline-panel-button" type="button" onClick={() => setMonsterBookOpen(true)}>{t("book.title")}</button></h2>
             {monsterForecast ? (
               <div className="forecast-content">
                 <SpriteIcon kind={monsterForecast.monster.kind} />
@@ -416,8 +489,67 @@ export default function App() {
           </section>
         </footer>
       </section>
+      {monsterBookOpen ? (
+        <MonsterBook floor={floor} t={t} tower={tower} close={() => setMonsterBookOpen(false)} />
+      ) : null}
+      {(tower.won || tower.lost) && !resultDismissed ? (
+        <ResultDialog close={() => setResultDismissed(true)} shareTower={shareTower} t={t} tower={tower} />
+      ) : null}
     </main>
   );
+}
+
+function createMoveFeedback(before: TowerState, after: TowerState, direction: Direction): Omit<FeedbackEvent, "id"> | null {
+  const delta = directionDelta(direction);
+  const target = { x: before.player.x + delta.x, y: before.player.y + delta.y };
+  const beforeFloor = getCurrentFloor(before);
+  const logKey = after.log[0]?.key;
+
+  if (target.x < 0 || target.y < 0 || target.x >= beforeFloor.width || target.y >= beforeFloor.height) {
+    return { kind: "blocked", floorIndex: before.currentFloorIndex, from: before.player, to: before.player, label: "Blocked" };
+  }
+
+  const tile = beforeFloor.tiles[target.y][target.x];
+  const content = beforeFloor.contents[target.y][target.x];
+
+  if (after.won && !before.won) {
+    return { kind: "victory", floorIndex: before.currentFloorIndex, from: before.player, to: target, label: "Victory", strong: true };
+  }
+  if (after.lost && !before.lost) {
+    return { kind: "fallen", floorIndex: before.currentFloorIndex, from: before.player, to: target, label: "Fallen", strong: true };
+  }
+  if (logKey?.includes("Blocked") || logKey === "log.wall" || logKey === "log.outerWall" || logKey === "log.princessSealed" || logKey === "log.monsterTooStrong") {
+    return { kind: "blocked", floorIndex: before.currentFloorIndex, from: before.player, to: target, label: "Blocked" };
+  }
+  if (content.type === "monster" && beforeFloor.contents[target.y][target.x].type === "monster") {
+    const damage = Math.max(0, before.hero.hp - after.hero.hp);
+    return { kind: "combat", floorIndex: before.currentFloorIndex, from: before.player, to: target, damage, strong: MONSTERS[content.monster].boss };
+  }
+  if (content.type === "item") {
+    return { kind: "pickup", floorIndex: before.currentFloorIndex, from: before.player, to: target, label: itemLabel(content.item) };
+  }
+  if (tile.endsWith("Door") && logKey?.includes("DoorOpened")) {
+    return { kind: "door", floorIndex: before.currentFloorIndex, from: before.player, to: target, label: "Open" };
+  }
+  if (content.type === "stairsUp" || content.type === "stairsDown") {
+    return { kind: "stairs", floorIndex: before.currentFloorIndex, from: before.player, to: target, label: "Stairs" };
+  }
+  return null;
+}
+
+function directionDelta(direction: Direction) {
+  if (direction === "up") return { x: 0, y: -1 };
+  if (direction === "down") return { x: 0, y: 1 };
+  if (direction === "left") return { x: -1, y: 0 };
+  return { x: 1, y: 0 };
+}
+
+function itemLabel(item: string) {
+  if (item.endsWith("Key")) return "Key";
+  if (item.includes("Potion")) return "HP";
+  if (item === "redGem") return "ATK";
+  if (item === "blueGem") return "DEF";
+  return "Item";
 }
 
 function TacticalPanel({
@@ -617,6 +749,76 @@ function RouteHint({ rows, t }: { rows: RouteHintStep[][]; t: (key: string, para
   );
 }
 
+function MonsterBook({ close, floor, t, tower }: { close: () => void; floor: FloorState; t: (key: string, params?: Record<string, string | number>) => string; tower: TowerState }) {
+  const monsters = getFloorMonsterRows(floor, tower);
+
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={t("book.title")}>
+      <section className="modal-panel frame-panel monster-book">
+        <div className="modal-heading">
+          <h2>{t("book.title")}</h2>
+          <button type="button" onClick={close}>×</button>
+        </div>
+        <div className="monster-book-list">
+          {monsters.length === 0 ? <p className="empty-note">{t("book.empty")}</p> : null}
+          {monsters.map(({ count, kind, preview }) => {
+            const monster = MONSTERS[kind];
+            return (
+              <div className="monster-book-row" key={kind}>
+                <SpriteIcon kind={kind} />
+                <div>
+                  <strong>{t(monster.name)} <small>×{count}</small></strong>
+                  <span>HP {monster.hp} · ATK {monster.atk} · DEF {monster.def} · Gold {monster.gold}</span>
+                </div>
+                <b className={preview.canWin ? "good" : "bad"}>{preview.canWin ? t("scanner.yes") : t("scanner.no")}</b>
+                <em>{t("fight.loss")} {formatLoss(preview.damageTaken)}</em>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ResultDialog({ close, shareTower, t, tower }: { close: () => void; shareTower: () => void; t: (key: string, params?: Record<string, string | number>) => string; tower: TowerState }) {
+  const summary = getRunSummary(tower);
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={tower.won ? t("result.victory") : t("result.fallen")}>
+      <section className="modal-panel frame-panel result-panel">
+        <div className="modal-heading">
+          <h2>{tower.won ? t("result.victory") : t("result.fallen")}</h2>
+          <button type="button" onClick={close}>×</button>
+        </div>
+        <p>{tower.won ? t("result.victorySub") : t("result.fallenSub")}</p>
+        <div className="result-grid">
+          <ResultMetric label={t("app.seed")} value={tower.seed} />
+          <ResultMetric label={t("forge.difficulty")} value={t(`difficulty.${tower.difficulty}`)} />
+          <ResultMetric label={t("result.moves")} value={tower.moves} />
+          <ResultMetric label={t("status.hp")} value={`${tower.hero.hp} / ${tower.hero.maxHp}`} />
+          <ResultMetric label={t("result.defeated")} value={summary.defeated} />
+          <ResultMetric label={t("result.doors")} value={summary.doors} />
+          <ResultMetric label={t("result.shops")} value={summary.shops} />
+          <ResultMetric label={t("status.gold")} value={tower.hero.gold} />
+        </div>
+        <div className="result-actions">
+          <button type="button" onClick={shareTower}>{t("forge.share")}</button>
+          <button type="button" onClick={close}>{t("result.close")}</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ResultMetric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="result-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
 function getMonsterForecast(tower: TowerState, floor: FloorState) {
   const nearby = [
     { x: tower.player.x, y: tower.player.y - 1 },
@@ -644,6 +846,20 @@ function getMonsterForecast(tower: TowerState, floor: FloorState) {
   }
 
   return null;
+}
+
+function getFloorMonsterRows(floor: FloorState, tower: TowerState) {
+  const counts = new Map<keyof typeof MONSTERS, number>();
+  floor.contents.flat().forEach((content) => {
+    if (content.type === "monster") {
+      counts.set(content.monster, (counts.get(content.monster) ?? 0) + 1);
+    }
+  });
+  return [...counts.entries()].map(([kind, count]) => ({ kind, count, preview: previewCombat(tower.hero, kind) }));
+}
+
+function getRunSummary(tower: TowerState) {
+  return tower.runStats ?? { defeated: 0, doors: 0, pickups: 0, shops: 0 };
 }
 
 function formatLog(entry: LogEntry, t: (key: string, params?: Record<string, string | number>) => string) {

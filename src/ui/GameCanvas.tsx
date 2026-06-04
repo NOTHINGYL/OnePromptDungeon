@@ -4,14 +4,21 @@ import { previewCombat } from "../engine/combat";
 import { translate, type Language } from "../i18n";
 import { SPRITE_SHEET_URL, SPRITES, type SpriteName } from "../assets/sprites";
 import type { CellContent, FloorState, TileKind, TowerState } from "../types/game";
+import type { FeedbackEvent } from "../types/feedback";
 
 export type TowerTheme = "classic-light" | "classic-dark";
 
 type GameCanvasProps = {
+  feedback?: FeedbackEvent | null;
   floor: FloorState;
   language: Language;
   theme: TowerTheme;
   tower: TowerState;
+};
+
+type ActiveFeedback = {
+  event: FeedbackEvent;
+  progress: number;
 };
 
 type Palette = {
@@ -57,11 +64,13 @@ const PALETTES: Record<TowerTheme, Palette> = {
   },
 };
 
-export function GameCanvas({ floor, language, theme, tower }: GameCanvasProps) {
+export function GameCanvas({ feedback, floor, language, theme, tower }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
+  const animationRef = useRef<number | null>(null);
   const [size, setSize] = useState(640);
   const [spriteSheet, setSpriteSheet] = useState<HTMLImageElement | null>(null);
+  const [activeFeedback, setActiveFeedback] = useState<ActiveFeedback | null>(null);
 
   useEffect(() => {
     if (!shellRef.current) {
@@ -83,6 +92,38 @@ export function GameCanvas({ floor, language, theme, tower }: GameCanvasProps) {
     image.onload = () => setSpriteSheet(image);
     image.onerror = () => setSpriteSheet(null);
   }, []);
+
+  useEffect(() => {
+    if (!feedback) {
+      return;
+    }
+
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+
+    const start = performance.now();
+    const duration = feedback.kind === "combat" ? 460 : feedback.kind === "victory" || feedback.kind === "fallen" ? 820 : 560;
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      setActiveFeedback({ event: feedback, progress });
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(tick);
+      } else {
+        animationRef.current = null;
+        window.setTimeout(() => setActiveFeedback((current) => (current?.event.id === feedback.id ? null : current)), 40);
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    };
+  }, [feedback]);
 
   const hoverPreview = useMemo(() => {
     const nearbyContent = [
@@ -117,8 +158,8 @@ export function GameCanvas({ floor, language, theme, tower }: GameCanvasProps) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
 
-    drawGame(ctx, floor, language, PALETTES[theme], tower, size, spriteSheet);
-  }, [floor, language, theme, tower, size, spriteSheet]);
+    drawGame(ctx, floor, language, PALETTES[theme], tower, size, spriteSheet, activeFeedback);
+  }, [activeFeedback, floor, language, theme, tower, size, spriteSheet]);
 
   return (
     <div className="board-shell" ref={shellRef}>
@@ -141,9 +182,18 @@ function drawGame(
   tower: TowerState,
   size: number,
   spriteSheet: HTMLImageElement | null,
+  feedback: ActiveFeedback | null,
 ) {
   const tile = size / floor.width;
+  const visibleFeedback = feedback?.event.floorIndex === tower.currentFloorIndex ? feedback : null;
+  const shake =
+    visibleFeedback?.event.kind === "combat" && visibleFeedback.progress < 0.36
+      ? Math.sin(visibleFeedback.progress * 46) * tile * 0.055 * (1 - visibleFeedback.progress)
+      : 0;
+
   ctx.clearRect(0, 0, size, size);
+  ctx.save();
+  ctx.translate(shake, 0);
   ctx.fillStyle = palette.floor;
   ctx.fillRect(0, 0, size, size);
 
@@ -155,6 +205,9 @@ function drawGame(
   }
 
   drawHero(ctx, tower.player.x, tower.player.y, tile, spriteSheet);
+  if (visibleFeedback) {
+    drawFeedback(ctx, palette, visibleFeedback, tile);
+  }
   drawFrame(ctx, palette, size, tile);
 
   if (tower.won) {
@@ -163,6 +216,109 @@ function drawGame(
   if (tower.lost) {
     drawOverlay(ctx, palette, size, translate(language, "overlay.fallen"), translate(language, "overlay.fallenSub"));
   }
+  ctx.restore();
+}
+
+function drawFeedback(ctx: CanvasRenderingContext2D, palette: Palette, feedback: ActiveFeedback, tile: number) {
+  const { event, progress } = feedback;
+  const alpha = Math.max(0, 1 - progress);
+  const cx = event.to.x * tile + tile / 2;
+  const cy = event.to.y * tile + tile / 2;
+  const left = event.to.x * tile;
+  const top = event.to.y * tile;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  if (event.kind === "combat") {
+    ctx.strokeStyle = event.strong ? "#ffb12c" : "#ff3f35";
+    ctx.lineWidth = Math.max(3, tile * 0.08);
+    ctx.shadowColor = "#ff2c20";
+    ctx.shadowBlur = tile * 0.18;
+    ctx.beginPath();
+    ctx.moveTo(left + tile * 0.18, top + tile * (0.2 + progress * 0.18));
+    ctx.lineTo(left + tile * 0.84, top + tile * (0.78 - progress * 0.16));
+    ctx.moveTo(left + tile * 0.82, top + tile * (0.18 + progress * 0.14));
+    ctx.lineTo(left + tile * 0.2, top + tile * (0.8 - progress * 0.12));
+    ctx.stroke();
+    drawFloatingLabel(ctx, event.damage ? `-${event.damage}` : "HIT", cx, cy - tile * (0.32 + progress * 0.42), "#ffdd98", tile, alpha);
+  }
+
+  if (event.kind === "pickup") {
+    drawSparkRing(ctx, cx, cy, tile * (0.22 + progress * 0.28), "#6ff7ff");
+    drawFloatingLabel(ctx, event.label ?? "+", cx, cy - tile * (0.22 + progress * 0.34), "#7fffea", tile, alpha);
+  }
+
+  if (event.kind === "door") {
+    ctx.strokeStyle = "#ffd35f";
+    ctx.lineWidth = Math.max(2, tile * 0.05);
+    ctx.shadowColor = "#ffd35f";
+    ctx.shadowBlur = tile * 0.22;
+    ctx.strokeRect(left + tile * 0.14, top + tile * 0.12, tile * 0.72, tile * 0.8);
+    drawFloatingLabel(ctx, event.label ?? "OPEN", cx, top + tile * (0.26 - progress * 0.2), "#ffe38d", tile, alpha);
+  }
+
+  if (event.kind === "blocked") {
+    ctx.strokeStyle = "#ff4b42";
+    ctx.lineWidth = Math.max(3, tile * 0.08);
+    ctx.beginPath();
+    ctx.moveTo(left + tile * 0.22, top + tile * 0.22);
+    ctx.lineTo(left + tile * 0.78, top + tile * 0.78);
+    ctx.moveTo(left + tile * 0.78, top + tile * 0.22);
+    ctx.lineTo(left + tile * 0.22, top + tile * 0.78);
+    ctx.stroke();
+  }
+
+  if (event.kind === "stairs" || event.kind === "shop" || event.kind === "undo") {
+    const color = event.kind === "shop" ? "#ffd35f" : event.kind === "undo" ? "#7fc7ff" : "#9bff84";
+    drawSparkRing(ctx, cx, cy, tile * (0.25 + progress * 0.36), color);
+    if (event.label) {
+      drawFloatingLabel(ctx, event.label, cx, cy - tile * (0.3 + progress * 0.28), color, tile, alpha);
+    }
+  }
+
+  if (event.kind === "victory" || event.kind === "fallen") {
+    const color = event.kind === "victory" ? "#ffe168" : "#ff4b42";
+    drawSparkRing(ctx, cx, cy, tile * (0.3 + progress * 0.58), color);
+  }
+
+  ctx.restore();
+}
+
+function drawSparkRing(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, color: string) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = radius * 0.45;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let index = 0; index < 8; index += 1) {
+    const angle = (Math.PI * 2 * index) / 8;
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius;
+    ctx.fillStyle = color;
+    ctx.fillRect(x - 2, y - 2, 4, 4);
+  }
+}
+
+function drawFloatingLabel(
+  ctx: CanvasRenderingContext2D,
+  label: string,
+  x: number,
+  y: number,
+  color: string,
+  tile: number,
+  alpha: number,
+) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.62)";
+  ctx.fillRect(x - tile * 0.34, y - tile * 0.25, tile * 0.68, tile * 0.32);
+  ctx.fillStyle = color;
+  ctx.font = `900 ${Math.max(12, tile * 0.24)}px ui-monospace, monospace`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, x, y - tile * 0.08);
 }
 
 function drawTile(

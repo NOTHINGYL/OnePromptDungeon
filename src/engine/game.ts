@@ -54,6 +54,7 @@ export function moveHero(tower: TowerState, direction: Direction): TowerState {
   if (doorResult.opened) {
     nextTower.hero = doorResult.hero;
     activeFloor.tiles[next.y][next.x] = "floor";
+    nextTower.runStats = incrementRunStat(nextTower.runStats, "doors");
     pushLog(nextTower, doorResult.message);
   }
 
@@ -72,6 +73,7 @@ export function moveHero(tower: TowerState, direction: Direction): TowerState {
     if (monster.boss) {
       nextTower.bossDefeated = true;
     }
+    nextTower.runStats = incrementRunStat(nextTower.runStats, "defeated");
     pushLog(nextTower, "log.defeated", { monster: monster.name, loss: preview.damageTaken, gold: monster.gold });
   }
 
@@ -79,6 +81,7 @@ export function moveHero(tower: TowerState, direction: Direction): TowerState {
   if (afterCombatContent.type === "item") {
     applyItem(nextTower.hero, afterCombatContent.item);
     activeFloor.contents[next.y][next.x] = { type: "empty" };
+    nextTower.runStats = incrementRunStat(nextTower.runStats, "pickups");
     pushLog(nextTower, "log.claimed", {
       item: ITEMS[afterCombatContent.item].name,
       description: ITEMS[afterCombatContent.item].description,
@@ -152,15 +155,18 @@ export function buyUpgrade(tower: TowerState, upgrade: ShopUpgrade): TowerState 
 
   if (upgrade === "atk") {
     nextTower.hero.atk += 12;
+    nextTower.runStats = incrementRunStat(nextTower.runStats, "shops");
     pushLog(nextTower, "log.buyAtk");
   }
   if (upgrade === "def") {
     nextTower.hero.def += 12;
+    nextTower.runStats = incrementRunStat(nextTower.runStats, "shops");
     pushLog(nextTower, "log.buyDef");
   }
   if (upgrade === "hp") {
     nextTower.hero.hp += 250;
     nextTower.hero.maxHp = Math.max(nextTower.hero.maxHp, nextTower.hero.hp);
+    nextTower.runStats = incrementRunStat(nextTower.runStats, "shops");
     pushLog(nextTower, "log.buyHp");
   }
 
@@ -286,6 +292,7 @@ function snapshotTower(tower: TowerState): TowerSnapshot {
     won: tower.won,
     lost: tower.lost,
     log: tower.log.map(cloneLog),
+    runStats: cloneRunStats(tower.runStats),
   };
 }
 
@@ -296,6 +303,7 @@ function cloneSnapshot(snapshot: TowerSnapshot): TowerSnapshot {
     hero: { ...snapshot.hero },
     player: { ...snapshot.player },
     log: snapshot.log.map(cloneLog),
+    runStats: cloneRunStats(snapshot.runStats),
   };
 }
 
@@ -306,6 +314,7 @@ function cloneTower(tower: TowerState): TowerState {
     hero: { ...tower.hero },
     player: { ...tower.player },
     log: tower.log.map(cloneLog),
+    runStats: cloneRunStats(tower.runStats),
     history: tower.history.map(cloneSnapshot),
   };
 }
@@ -348,6 +357,16 @@ function cloneLog(log: TowerState["log"][number]) {
     key: log.key,
     params: log.params ? { ...log.params } : undefined,
   };
+}
+
+function cloneRunStats(stats: TowerState["runStats"]) {
+  return stats ? { ...stats } : { defeated: 0, doors: 0, pickups: 0, shops: 0 };
+}
+
+function incrementRunStat(stats: TowerState["runStats"], key: keyof NonNullable<TowerState["runStats"]>) {
+  const next = cloneRunStats(stats);
+  next[key] += 1;
+  return next;
 }
 
 function withLog(tower: TowerState, message: string, params?: Record<string, string | number>) {

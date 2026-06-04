@@ -65,6 +65,13 @@ export type LogEntry = {
   params?: Record<string, string | number>;
 };
 
+export type RunStats = {
+  defeated: number;
+  doors: number;
+  pickups: number;
+  shops: number;
+};
+
 export type FloorState = {
   id: string;
   title: string;
@@ -88,6 +95,7 @@ export type TowerSnapshot = {
   won: boolean;
   lost: boolean;
   log: LogEntry[];
+  runStats?: RunStats;
 };
 
 export type TowerState = TowerSnapshot & {
