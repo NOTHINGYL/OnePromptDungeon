@@ -478,11 +478,7 @@ function TacticalPanel({
           <ScanMetric label={t("scanner.keys")} value={`${scanner.remainingKeys.yellow}/${scanner.remainingKeys.blue}/${scanner.remainingKeys.red}`} />
           <ScanMetric label={t("scanner.doors")} value={`${scanner.blockedDoors.yellow}/${scanner.blockedDoors.blue}/${scanner.blockedDoors.red}`} tone="warn" />
           <ScanMetric label={t("scanner.solvable")} value={seedSummary.solvable ? t("scanner.yes") : t("scanner.no")} tone={seedSummary.solvable ? "good" : "bad"} />
-        </div>
-        <div className="scanner-next">
-          <SpriteIcon kind={scanner.nextTarget.icon} />
-          <span>{t("scanner.next")}</span>
-          <strong className={scanner.nextTarget.tone}>{t(scanner.nextTarget.key)}</strong>
+          <ScanMetric label={t("scanner.next")} value={t(scanner.nextTarget.key)} tone={scanner.nextTarget.tone} />
         </div>
       </section>
       <button className="seed-badge" type="button" onClick={openForge}>

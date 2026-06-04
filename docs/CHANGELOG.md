@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.1
+
+Tower Scanner layout fix.
+
+- Moved the `Next` recommendation into the scanner metric grid.
+- Reduced the scanner card height so it no longer clips behind the Seed panel on shorter browser viewports.
+
 ## v0.6.0
 
 Route scanner and better local generator.

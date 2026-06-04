@@ -570,7 +570,7 @@ canvas {
 
 .scanner-card {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto;
   align-content: start;
   gap: 8px;
 }
