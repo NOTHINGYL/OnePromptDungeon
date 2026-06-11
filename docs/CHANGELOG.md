@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.1
+
+Feedback cleanup fix.
+
+- Cleared stale Canvas feedback on normal movement so blocked-move cross marks only appear when the player actually bumps into a wall or locked route.
+- Added a Canvas-side guard that cancels and clears the previous animation when `feedback` becomes empty.
+
 ## v0.7.0
 
 Game feel pass.

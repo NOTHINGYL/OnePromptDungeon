@@ -95,6 +95,11 @@ export function GameCanvas({ feedback, floor, language, theme, tower }: GameCanv
 
   useEffect(() => {
     if (!feedback) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      setActiveFeedback(null);
       return;
     }
 

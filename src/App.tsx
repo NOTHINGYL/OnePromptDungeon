@@ -136,16 +136,22 @@ export default function App() {
     playSfx(nextEvent.kind, soundMuted);
   }, [soundMuted]);
 
+  const clearFeedback = useCallback(() => {
+    setFeedback(null);
+  }, []);
+
   const move = useCallback((direction: Direction) => {
     setTower((current) => {
       const nextTower = moveHero(current, direction);
       const event = createMoveFeedback(current, nextTower, direction);
       if (event) {
         triggerFeedback(event);
+      } else {
+        clearFeedback();
       }
       return nextTower;
     });
-  }, [triggerFeedback]);
+  }, [clearFeedback, triggerFeedback]);
 
   const restart = () => {
     const nextTower = createGeneratedTower({ prompt: wish, seed, difficulty });
