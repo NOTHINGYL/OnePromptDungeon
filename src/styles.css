@@ -358,8 +358,8 @@ dd {
 
 .hero-meta {
   display: grid;
-  align-content: center;
-  gap: 8px;
+  align-content: start;
+  gap: 4px;
   color: var(--text);
 }
 
@@ -369,8 +369,41 @@ dd {
 }
 
 .hero-meta strong {
-  font-size: 2rem;
+  font-size: 1.62rem;
+  line-height: 1;
   font-weight: 700;
+}
+
+.equipment-lines {
+  display: grid;
+  gap: 2px;
+  margin-top: 1px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 214, 138, 0.14);
+}
+
+.equipment-lines span {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 18px auto minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  color: var(--text);
+  font-size: 0.66rem;
+  line-height: 0.95;
+  white-space: nowrap;
+}
+
+.equipment-lines .sprite {
+  width: 14px;
+  height: 14px;
+}
+
+.equipment-lines b {
+  overflow: hidden;
+  color: #7ee7ff;
+  font-weight: 900;
+  text-overflow: ellipsis;
 }
 
 .exp-bar,
@@ -1453,7 +1486,7 @@ canvas {
   }
 
   .status-rail {
-    grid-template-rows: 128px 136px 62px 62px minmax(88px, 1fr);
+    grid-template-rows: 142px 134px 58px 58px minmax(74px, 1fr);
     gap: 6px;
   }
 

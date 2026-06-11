@@ -36,6 +36,26 @@ export const ITEMS: Record<ItemKind, Item> = {
     name: "item.redKey.name",
     description: "item.redKey.description",
   },
+  ironSword: {
+    kind: "ironSword",
+    name: "item.ironSword.name",
+    description: "item.ironSword.description",
+  },
+  silverSword: {
+    kind: "silverSword",
+    name: "item.silverSword.name",
+    description: "item.silverSword.description",
+  },
+  ironShield: {
+    kind: "ironShield",
+    name: "item.ironShield.name",
+    description: "item.ironShield.description",
+  },
+  silverShield: {
+    kind: "silverShield",
+    name: "item.silverShield.name",
+    description: "item.silverShield.description",
+  },
 };
 
 export const MONSTERS: Record<MonsterKind, Monster> = {

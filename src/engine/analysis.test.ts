@@ -10,6 +10,7 @@ describe("tower analysis", () => {
     expect(summary.solvable).toBe(true);
     expect(summary.totalMonsters).toBeGreaterThan(0);
     expect(summary.totalDoors).toBeGreaterThan(0);
+    expect(summary.equipment).toBeGreaterThan(0);
     expect(summary.style.length).toBeGreaterThan(0);
   });
 

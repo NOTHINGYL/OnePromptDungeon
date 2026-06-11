@@ -70,10 +70,21 @@ function loadSavedTower() {
       return null;
     }
     const parsed = JSON.parse(saved) as TowerState;
-    return parsed?.seed && Array.isArray(parsed.floors) ? parsed : null;
+    return parsed?.seed && Array.isArray(parsed.floors) ? normalizeSavedTower(parsed) : null;
   } catch {
     return null;
   }
+}
+
+function normalizeSavedTower(tower: TowerState): TowerState {
+  return {
+    ...tower,
+    hero: { ...tower.hero, weapon: tower.hero.weapon ?? "none", shield: tower.hero.shield ?? "none" },
+    history: (tower.history ?? []).map((snapshot) => ({
+      ...snapshot,
+      hero: { ...snapshot.hero, weapon: snapshot.hero.weapon ?? "none", shield: snapshot.hero.shield ?? "none" },
+    })),
+  };
 }
 
 function loadSeedHistory(): SeedHistoryEntry[] {
@@ -356,6 +367,10 @@ export default function App() {
                 <strong>{tower.currentFloorIndex + 1} / {tower.floors.length}</strong>
                 <span>Lv. 1 {t("status.hero")}</span>
                 <div className="exp-bar"><i style={{ width: `${Math.min(96, tower.moves * 4)}%` }} /></div>
+                <div className="equipment-lines">
+                  <span><SpriteIcon kind="sword" width={14} height={14} /> {t("status.weapon")} <b>{t(`equipment.${tower.hero.weapon}`)}</b></span>
+                  <span><SpriteIcon kind="shield" width={14} height={14} /> {t("status.shield")} <b>{t(`equipment.${tower.hero.shield}`)}</b></span>
+                </div>
               </div>
             </section>
 
@@ -555,6 +570,8 @@ function itemLabel(item: string) {
   if (item.includes("Potion")) return "HP";
   if (item === "redGem") return "ATK";
   if (item === "blueGem") return "DEF";
+  if (item.includes("Sword")) return "ATK";
+  if (item.includes("Shield")) return "DEF";
   return "Item";
 }
 
@@ -709,7 +726,7 @@ function WishForge({
         <div className="forge-report">
           <strong>{t("report.title")}</strong>
           <span>{t("report.solvable")}: <b className={seedSummary.solvable ? "good" : "bad"}>{seedSummary.solvable ? t("scanner.yes") : t("scanner.no")}</b></span>
-          <span>{t("report.shape")}: {seedSummary.totalKeys}K / {seedSummary.totalDoors}D / {seedSummary.totalMonsters}M</span>
+          <span>{t("report.shape")}: {seedSummary.totalKeys}K / {seedSummary.totalDoors}D / {seedSummary.totalMonsters}M / {seedSummary.equipment}E</span>
           <span>{seedSummary.style.map((style) => t(style)).join(" · ")}</span>
         </div>
         <button className="generate-button" type="button" onClick={generateTower}>✦ {t("forge.generate")}</button>

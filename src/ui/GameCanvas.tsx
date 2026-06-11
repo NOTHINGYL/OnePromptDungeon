@@ -539,6 +539,11 @@ function drawMonster(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy
 }
 
 function drawItem(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: number, tile: number, spriteSheet: HTMLImageElement | null) {
+  if (kind === "ironSword" || kind === "silverSword" || kind === "ironShield" || kind === "silverShield") {
+    drawEquipmentItem(ctx, kind, cx, cy, tile);
+    return;
+  }
+
   if (spriteSheet) {
     const spriteName = itemSprite(kind);
     drawSheetSprite(ctx, spriteSheet, spriteName, cx - tile * 0.34, cy - tile * 0.38, tile * 0.68, tile * 0.76, "contain");
@@ -573,6 +578,50 @@ function drawItem(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: n
   ctx.fillStyle = "rgba(255,255,255,0.55)";
   pixelDiamond(ctx, cx - tile * 0.04, cy - tile * 0.04, tile * 0.08);
   ctx.fill();
+}
+
+function drawEquipmentItem(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: number, tile: number) {
+  ctx.save();
+  ctx.shadowColor = kind.includes("silver") ? "#d7f3ff" : "#ffd77a";
+  ctx.shadowBlur = tile * 0.12;
+
+  if (kind.includes("Sword")) {
+    ctx.translate(cx, cy);
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillStyle = kind === "silverSword" ? "#e7f6ff" : "#bfc9d2";
+    ctx.fillRect(-tile * 0.06, -tile * 0.34, tile * 0.12, tile * 0.52);
+    ctx.fillStyle = "#fff8d6";
+    ctx.fillRect(-tile * 0.04, -tile * 0.34, tile * 0.04, tile * 0.44);
+    ctx.fillStyle = "#d7a84c";
+    ctx.fillRect(-tile * 0.2, tile * 0.12, tile * 0.4, tile * 0.08);
+    ctx.fillStyle = "#69401f";
+    ctx.fillRect(-tile * 0.05, tile * 0.18, tile * 0.1, tile * 0.22);
+    ctx.restore();
+    return;
+  }
+
+  const color = kind === "silverShield" ? "#d7f3ff" : "#6da5ff";
+  ctx.fillStyle = "#d9a64f";
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - tile * 0.34);
+  ctx.lineTo(cx + tile * 0.3, cy - tile * 0.18);
+  ctx.lineTo(cx + tile * 0.22, cy + tile * 0.22);
+  ctx.lineTo(cx, cy + tile * 0.38);
+  ctx.lineTo(cx - tile * 0.22, cy + tile * 0.22);
+  ctx.lineTo(cx - tile * 0.3, cy - tile * 0.18);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - tile * 0.24);
+  ctx.lineTo(cx + tile * 0.2, cy - tile * 0.12);
+  ctx.lineTo(cx + tile * 0.14, cy + tile * 0.16);
+  ctx.lineTo(cx, cy + tile * 0.28);
+  ctx.lineTo(cx - tile * 0.14, cy + tile * 0.16);
+  ctx.lineTo(cx - tile * 0.2, cy - tile * 0.12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 }
 
 function drawHero(ctx: CanvasRenderingContext2D, x: number, y: number, tile: number, spriteSheet: HTMLImageElement | null) {

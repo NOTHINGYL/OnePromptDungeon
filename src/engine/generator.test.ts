@@ -4,7 +4,7 @@ import { createGeneratedTower, makeSeed } from "./level";
 describe("local seed generator", () => {
   it("creates deterministic towers from the same wish, seed, and difficulty", () => {
     const options = {
-      prompt: "three-floor tower, scarce blue keys, one risky shop route",
+      prompt: "five-floor tower, scarce blue keys, one risky shop route",
       seed: "7F3A9B1C",
       difficulty: "normal" as const,
     };
@@ -13,6 +13,7 @@ describe("local seed generator", () => {
     const second = createGeneratedTower(options);
 
     expect(first.seed).toBe("7F3A9B1C");
+    expect(first.floors).toHaveLength(5);
     expect(first.floors).toEqual(second.floors);
     expect(first.hero).toEqual(second.hero);
   });

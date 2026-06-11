@@ -78,4 +78,24 @@ describe("shop and undo", () => {
     expect(restored.hero.hp).toBe(700);
     expect(restored.history).toHaveLength(0);
   });
+
+  it("applies equipment pickups and undo restores equipment state", () => {
+    const tower = createInitialTower();
+    const floor = getCurrentFloor(tower);
+    tower.player = { x: 1, y: 13 };
+    floor.tiles[13][2] = "floor";
+    floor.contents[13][2] = { type: "item", item: "ironSword" };
+
+    const equipped = moveHero(tower, "right");
+
+    expect(equipped.hero.atk).toBe(56);
+    expect(equipped.hero.weapon).toBe("ironSword");
+    expect(getCurrentFloor(equipped).contents[13][2]).toEqual({ type: "empty" });
+
+    const restored = undo(equipped);
+
+    expect(restored.hero.atk).toBe(38);
+    expect(restored.hero.weapon).toBe("none");
+    expect(getCurrentFloor(restored).contents[13][2]).toEqual({ type: "item", item: "ironSword" });
+  });
 });

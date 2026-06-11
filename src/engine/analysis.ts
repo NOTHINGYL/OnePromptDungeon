@@ -37,6 +37,7 @@ export type SeedSummary = {
   totalMonsters: number;
   totalKeys: number;
   totalDoors: number;
+  equipment: number;
   shops: number;
 };
 
@@ -141,6 +142,7 @@ export function summarizeSeed(tower: TowerState): SeedSummary {
   let totalMonsters = 0;
   let totalKeys = 0;
   let totalDoors = 0;
+  let equipment = 0;
   let shops = 0;
   let hasBoss = false;
   let hasPrincess = false;
@@ -155,6 +157,9 @@ export function summarizeSeed(tower: TowerState): SeedSummary {
       if (content.type === "item" && content.item.endsWith("Key")) {
         totalKeys += 1;
       }
+      if (content.type === "item" && isEquipmentItem(content.item)) {
+        equipment += 1;
+      }
       if (content.type === "shop") {
         shops += 1;
       }
@@ -166,10 +171,11 @@ export function summarizeSeed(tower: TowerState): SeedSummary {
 
   return {
     solvable: hasBoss && hasPrincess && tower.floors.every((floor, index) => index === tower.floors.length - 1 || floor.stairsUp),
-    style: detectSeedStyle(tower.prompt, totalMonsters, totalKeys, shops),
+    style: detectSeedStyle(tower.prompt, totalMonsters, totalKeys, shops, equipment),
     totalMonsters,
     totalKeys,
     totalDoors,
+    equipment,
     shops,
   };
 }
@@ -187,6 +193,14 @@ function chooseNextTarget(
   if (hasReachableContent(floor, reachable, (content) => content.type === "item" && content.item.endsWith("Key"))) {
     return { icon: "keyYellow", key: "scanner.next.key", tone: "good" };
   }
+  if (hasReachableContent(floor, reachable, (content) => content.type === "item" && isEquipmentItem(content.item))) {
+    const hasWeapon = hasReachableContent(
+      floor,
+      reachable,
+      (content) => content.type === "item" && (content.item === "ironSword" || content.item === "silverSword"),
+    );
+    return { icon: hasWeapon ? "sword" : "shield", key: hasWeapon ? "scanner.next.weapon" : "scanner.next.shield", tone: "good" };
+  }
   if (safeFights > 0) {
     return { icon: "bat", key: "scanner.next.safeFight", tone: "good" };
   }
@@ -197,6 +211,10 @@ function chooseNextTarget(
     return { icon: "keyYellow", key: "scanner.next.needKey", tone: "warn" };
   }
   return { icon: "gemRed", key: "scanner.next.reward", tone: "warn" };
+}
+
+function isEquipmentItem(item: string) {
+  return item === "ironSword" || item === "silverSword" || item === "ironShield" || item === "silverShield";
 }
 
 function findReachable(tower: TowerState, floor: FloorState) {
@@ -275,11 +293,12 @@ function countKeys(floor: FloorState) {
   return keys;
 }
 
-function detectSeedStyle(prompt: string, totalMonsters: number, totalKeys: number, shops: number) {
+function detectSeedStyle(prompt: string, totalMonsters: number, totalKeys: number, shops: number, equipment: number) {
   const text = prompt.toLowerCase();
   const styles: string[] = [];
   if (/shop|merchant|商店|商人/.test(text) || shops > 0) styles.push("style.shop");
   if (/blue|key|钥匙|门/.test(text) || totalKeys < 8) styles.push("style.keyPuzzle");
+  if (/sword|weapon|shield|剑|武器|盾/.test(text) || equipment > 0) styles.push("style.equipment");
   if (/boss|rush|首领|速通|守卫/.test(text)) styles.push("style.bossRush");
   if (/treasure|gem|potion|宝石|血瓶|宝藏/.test(text)) styles.push("style.treasure");
   if (totalMonsters >= 16) styles.push("style.combat");

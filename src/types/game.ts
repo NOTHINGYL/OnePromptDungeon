@@ -7,7 +7,11 @@ export type ItemKind =
   | "blueGem"
   | "yellowKey"
   | "blueKey"
-  | "redKey";
+  | "redKey"
+  | "ironSword"
+  | "silverSword"
+  | "ironShield"
+  | "silverShield";
 
 export type MonsterKind =
   | "greenSlime"
@@ -18,6 +22,8 @@ export type MonsterKind =
   | "towerWarden";
 
 export type Difficulty = "easy" | "normal" | "hard";
+export type WeaponKind = "none" | "ironSword" | "silverSword";
+export type ShieldKind = "none" | "ironShield" | "silverShield";
 
 export type Position = {
   x: number;
@@ -33,6 +39,8 @@ export type HeroStats = {
   yellowKeys: number;
   blueKeys: number;
   redKeys: number;
+  weapon: WeaponKind;
+  shield: ShieldKind;
 };
 
 export type Monster = {

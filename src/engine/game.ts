@@ -274,6 +274,22 @@ function applyItem(hero: HeroStats, item: ItemKind) {
     case "redKey":
       hero.redKeys += 1;
       break;
+    case "ironSword":
+      hero.atk += 18;
+      hero.weapon = "ironSword";
+      break;
+    case "silverSword":
+      hero.atk += 32;
+      hero.weapon = "silverSword";
+      break;
+    case "ironShield":
+      hero.def += 18;
+      hero.shield = "ironShield";
+      break;
+    case "silverShield":
+      hero.def += 32;
+      hero.shield = "silverShield";
+      break;
   }
 }
 
@@ -285,7 +301,7 @@ function snapshotTower(tower: TowerState): TowerSnapshot {
   return {
     floors: tower.floors.map(cloneFloor),
     currentFloorIndex: tower.currentFloorIndex,
-    hero: { ...tower.hero },
+    hero: cloneHero(tower.hero),
     player: { ...tower.player },
     moves: tower.moves,
     bossDefeated: tower.bossDefeated,
@@ -300,7 +316,7 @@ function cloneSnapshot(snapshot: TowerSnapshot): TowerSnapshot {
   return {
     ...snapshot,
     floors: snapshot.floors.map(cloneFloor),
-    hero: { ...snapshot.hero },
+    hero: cloneHero(snapshot.hero),
     player: { ...snapshot.player },
     log: snapshot.log.map(cloneLog),
     runStats: cloneRunStats(snapshot.runStats),
@@ -311,7 +327,7 @@ function cloneTower(tower: TowerState): TowerState {
   return {
     ...tower,
     floors: tower.floors.map(cloneFloor),
-    hero: { ...tower.hero },
+    hero: cloneHero(tower.hero),
     player: { ...tower.player },
     log: tower.log.map(cloneLog),
     runStats: cloneRunStats(tower.runStats),
@@ -356,6 +372,14 @@ function cloneLog(log: TowerState["log"][number]) {
   return {
     key: log.key,
     params: log.params ? { ...log.params } : undefined,
+  };
+}
+
+function cloneHero(hero: HeroStats): HeroStats {
+  return {
+    ...hero,
+    weapon: hero.weapon ?? "none",
+    shield: hero.shield ?? "none",
   };
 }
 

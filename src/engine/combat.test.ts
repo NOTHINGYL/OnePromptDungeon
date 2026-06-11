@@ -11,6 +11,8 @@ const hero: HeroStats = {
   yellowKeys: 1,
   blueKeys: 0,
   redKeys: 0,
+  weapon: "none",
+  shield: "none",
 };
 
 describe("previewCombat", () => {

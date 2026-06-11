@@ -84,7 +84,18 @@ Goal: make the tower feel more like a game instead of a static route planner.
 - Add victory/failure run summary panels
 - Track defeated monsters, opened doors, pickups, and shop purchases in undoable tower state
 
-## v0.8 - Optional AI Mode
+## v0.8 - Five-Floor Equipment Tower
+
+Goal: make OnePromptDungeon feel more like a complete compact Magic Tower run with visible growth choices.
+
+- Expand generated and handcrafted towers from three floors to five
+- Add weapon and shield pickups with persistent hero equipment state
+- Put equipment growth pressure on 3F and 4F before the final 5F boss route
+- Teach Wish Forge prompt analysis about sword, weapon, shield, and defense wishes
+- Update Tower Scanner, Seed Summary, and Route Hint to surface equipment rewards
+- Keep the 15x15 board and GitHub Pages-only static deployment
+
+## v0.9 - Optional AI Mode
 
 Goal: let LLMs produce flavor and structured level data while the local engine remains authoritative.
 
@@ -96,7 +107,7 @@ Goal: let LLMs produce flavor and structured level data while the local engine r
 
 ## Star-Friendly Polish Ideas
 
-- README GIF showing a full three-floor clear.
+- README GIF showing a full five-floor clear.
 - "Add your first monster in 60 seconds" contributor section.
 - Example community tower seeds.
-- A small solvability report for generated levels once v0.3 lands.
+- A small solvability report for generated levels and seed gallery pages.

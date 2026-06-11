@@ -30,6 +30,8 @@ type WishProfile = {
   treasure: boolean;
   defense: boolean;
   bossRush: boolean;
+  weapon: boolean;
+  shield: boolean;
 };
 
 type Rng = () => number;
@@ -87,7 +89,7 @@ const BASE_FLOORS: FloorDefinition[] = [
     objective: "floor.floor-3.objective",
     raw: [
       "###############",
-      "#D..H.#..X.RC.#",
+      "#D..H.#..1.U..#",
       "#.###.#.###R#.#",
       "#...#...#n..#.#",
       "#Y#.#####.###.#",
@@ -95,11 +97,55 @@ const BASE_FLOORS: FloorDefinition[] = [
       "#.###.###.#.#.#",
       "#..r#.#...#.#.#",
       "###.#.#.###.#.#",
-      "#e..#...k...#.#",
+      "#3..#...k...#.#",
       "#.#####.#####.#",
       "#...b...#...n.#",
       "#.#.###.#.###.#",
       "#...t..B..m.y.#",
+      "###############",
+    ],
+  },
+  {
+    id: "floor-4",
+    title: "floor.floor-4.title",
+    objective: "floor.floor-4.objective",
+    raw: [
+      "###############",
+      "#D..n.#..2.U..#",
+      "#.###B#.###R#.#",
+      "#...#...#m..#.#",
+      "#Y#.#####.###.#",
+      "#4#...d...#h#.#",
+      "#.###.###.#.#.#",
+      "#..e#.#...#.#.#",
+      "###.#.#.###.#.#",
+      "#m..#...n...#.#",
+      "#.#####.#####.#",
+      "#...H...#...k.#",
+      "#.#.###.#.###.#",
+      "#...t..R..m.y.#",
+      "###############",
+    ],
+  },
+  {
+    id: "floor-5",
+    title: "floor.floor-5.title",
+    objective: "floor.floor-5.objective",
+    raw: [
+      "###############",
+      "#D..H.#..X.C..#",
+      "#.###.#.###R#.#",
+      "#...#...#n..#.#",
+      "#B#.#####.###.#",
+      "#m#...d...#h#.#",
+      "#.###.###.#.#.#",
+      "#..r#.#...#.#.#",
+      "###.#.#.###.#.#",
+      "#e..#...n...#.#",
+      "#.#####.#####.#",
+      "#...b...#...m.#",
+      "#.#.###.#.###.#",
+      "#...2..R..4.y.#",
       "###############",
     ],
   },
@@ -115,6 +161,8 @@ const INITIAL_HERO: Record<Difficulty, HeroStats> = {
     yellowKeys: 2,
     blueKeys: 1,
     redKeys: 0,
+    weapon: "none",
+    shield: "none",
   },
   normal: {
     hp: 700,
@@ -125,6 +173,8 @@ const INITIAL_HERO: Record<Difficulty, HeroStats> = {
     yellowKeys: 2,
     blueKeys: 1,
     redKeys: 0,
+    weapon: "none",
+    shield: "none",
   },
   hard: {
     hp: 560,
@@ -135,6 +185,8 @@ const INITIAL_HERO: Record<Difficulty, HeroStats> = {
     yellowKeys: 1,
     blueKeys: 0,
     redKeys: 0,
+    weapon: "none",
+    shield: "none",
   },
 };
 
@@ -152,6 +204,20 @@ const VARIANT_SLOTS: Array<Array<{ x: number; y: number; chars: string[] }>> = [
     { x: 3, y: 9, chars: ["r", "s", "y"] },
     { x: 7, y: 11, chars: ["h", "t", "d"] },
     { x: 13, y: 13, chars: ["e", "b", "n"] },
+  ],
+  [
+    { x: 3, y: 3, chars: ["h", "r", "m"] },
+    { x: 7, y: 5, chars: ["d", "H", "n"] },
+    { x: 3, y: 9, chars: ["e", "r", "k"] },
+    { x: 11, y: 11, chars: ["n", "b", "H"] },
+    { x: 13, y: 13, chars: ["y", "m", "t"] },
+  ],
+  [
+    { x: 3, y: 3, chars: ["h", "r", "m"] },
+    { x: 7, y: 5, chars: ["d", "H", "n"] },
+    { x: 3, y: 9, chars: ["m", "e", "k"] },
+    { x: 11, y: 11, chars: ["n", "b", "H"] },
+    { x: 13, y: 13, chars: ["y", "m", "t"] },
   ],
   [
     { x: 3, y: 3, chars: ["h", "r", "m"] },
@@ -225,7 +291,7 @@ function buildFloorDefinitions(rng: Rng, profile: WishProfile, difficulty: Diffi
       setChar(raw, 5, 5, "$");
       setChar(raw, 7, 5, pick(rng, difficulty === "hard" ? ["m", "n"] : ["k", "m"]));
     }
-    if (profile.bossRush && index === 2) {
+    if (profile.bossRush && index === 4) {
       setChar(raw, 9, 1, "X");
       setChar(raw, 9, 3, pick(rng, ["n", "m"]));
     }
@@ -235,6 +301,12 @@ function buildFloorDefinitions(rng: Rng, profile: WishProfile, difficulty: Diffi
     }
     if (profile.defense) {
       setChar(raw, index === 2 ? 5 : 7, index === 0 ? 11 : 9, "d");
+    }
+    if (profile.weapon && index >= 2) {
+      setChar(raw, index === 4 ? 5 : 9, index === 4 ? 13 : 1, index >= 3 ? "2" : "1");
+    }
+    if (profile.shield && index >= 2) {
+      setChar(raw, index === 4 ? 10 : 3, index === 4 ? 13 : 9, index >= 3 ? "4" : "3");
     }
 
     return {
@@ -255,6 +327,12 @@ function tuneSlot(chars: string[], profile: WishProfile, difficulty: Difficulty)
   if (profile.defense) {
     pool.push("d");
   }
+  if (profile.weapon) {
+    pool.push("1", "2");
+  }
+  if (profile.shield) {
+    pool.push("3", "4");
+  }
   if (difficulty === "easy") {
     pool.push("h", "y", "r");
   }
@@ -273,6 +351,8 @@ function analyzeWish(prompt: string): WishProfile {
     treasure: /treasure|gem|potion|reward|宝石|血瓶|奖励|宝藏/.test(text),
     defense: /def|defense|shield|防御|盾/.test(text),
     bossRush: /boss|rush|warden|首领|速通|守卫/.test(text),
+    weapon: /sword|weapon|blade|剑|武器/.test(text),
+    shield: /shield|armor|defense|盾|防御|护甲/.test(text),
   };
 }
 
@@ -357,6 +437,14 @@ function parseCell(char: string): { tile: TileKind; content: CellContent } {
       return { tile: "floor", content: { type: "item", item: "blueKey" } };
     case "e":
       return { tile: "floor", content: { type: "item", item: "redKey" } };
+    case "1":
+      return { tile: "floor", content: { type: "item", item: "ironSword" } };
+    case "2":
+      return { tile: "floor", content: { type: "item", item: "silverSword" } };
+    case "3":
+      return { tile: "floor", content: { type: "item", item: "ironShield" } };
+    case "4":
+      return { tile: "floor", content: { type: "item", item: "silverShield" } };
     case "U":
       return { tile: "floor", content: { type: "stairsUp" } };
     case "D":

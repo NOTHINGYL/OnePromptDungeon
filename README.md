@@ -2,7 +2,7 @@
 
 OnePromptDungeon is a browser-playable, Magic Tower-like route puzzle designed for GitHub Pages.
 
-v0.7 focuses on game feel: movement outcomes now trigger visual feedback, lightweight Web Audio sound effects, a floor Monster Book, and victory/failure run summaries while keeping the GitHub Pages build fully static.
+v0.8 expands the game into a five-floor equipment-growth tower: swords and shields now shape the route economy, the local Wish Forge always generates five-floor towers, and the GitHub Pages build stays fully static with no API key required.
 
 ## Play
 
@@ -45,7 +45,18 @@ npm test
 - Wish Forge: click the `Wish Forge` button or press `I` to open the local generator
 - Monster Book: use the `Monster Book` button in Battle Forecast to inspect remaining monsters on the current floor
 - Shop: stand on the merchant tile and buy ATK, DEF, or HP upgrades
-- Goal: climb to 3F, defeat the Crystal Warden, and rescue the princess
+- Goal: climb to 5F, gather weapons and shields, defeat the Crystal Warden, and rescue the princess
+
+## What v0.8 Includes
+
+- Five persistent 15x15 floors with the final boss and princess moved to 5F
+- Equipment pickups: Iron Sword, Silver Sword, Iron Shield, and Silver Shield
+- Hero HUD now shows the current weapon and shield while undo restores equipment state
+- Wish Forge generation, seed summaries, and Tower Scanner hints now understand equipment rewards
+- Route Hint can recommend weapon or shield targets when they are reachable
+- Canvas equipment rendering for map rewards without requiring a new sprite sheet
+- Save compatibility for older towers that do not yet contain weapon or shield fields
+- Updated README, changelog, roadmap, package version, tests, and local v0.8 notes
 
 ## What v0.7 Includes
 
@@ -81,14 +92,14 @@ npm test
 - Classic dark tower HUD refinements to move away from generic modern web UI
 - Premium Neo-Retro Tower UI inspired by classic tower RPGs, rebuilt with a larger map-first layout
 - Collapsible `Wish Forge` drawer for Wish, Seed, Difficulty, Generate, Export JSON, and Share Link
-- Local seed generator: `Wish + Seed + Difficulty` creates reproducible three-floor towers
+- Local seed generator: `Wish + Seed + Difficulty` creates reproducible tower layouts
 - Prompt keyword handling for routes such as scarce blue keys, risky shops, boss rush, treasure, and defense paths
 - Right-side tactical panel with objective, monster forecast, tower scanner, and seed badge
 - Bottom HUD for battle forecast, merchant choices, tower log, and route hint
 - Full Chinese/English UI switch with saved preference
 - Classic light/dark theme switch with saved preference
 - Original project PNG pixel-style hero, monsters, items, stairs, merchant, boss, and princess
-- Three 15x15 floors with deterministic seed-based variation
+- Five 15x15 floors with deterministic seed-based variation
 - Persistent floor state when moving up and down stairs
 - Deterministic Magic Tower-style combat preview
 - Yellow, blue, and red doors with matching keys
@@ -113,7 +124,8 @@ The project is inspired by deterministic tower RPGs: the fun comes from route pl
 - v0.5: PNG sprite sheet, design-match tower UI, stronger visual identity
 - v0.6: Tower Scanner, dynamic route hints, generator presets, seed history, local save
 - v0.7: Combat animation feedback, local SFX, Monster Book, victory/failure run summary
-- v0.8: Optional AI mode for story/theme/level JSON generation
+- v0.8: Five-floor equipment-growth tower
+- v0.9: Optional AI mode for story/theme/level JSON generation
 
 More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.8.0
+
+Five-floor equipment-growth tower.
+
+- Expanded the tower from three floors to five persistent 15x15 floors.
+- Added Iron Sword, Silver Sword, Iron Shield, and Silver Shield pickups.
+- Added weapon and shield fields to hero state with old-save defaults and undo restoration.
+- Updated handcrafted floor layouts so 3F/4F introduce equipment decisions and 5F holds the final boss and princess.
+- Updated the local Wish Forge generator and variant slots so generated towers are always five floors.
+- Added prompt keyword handling for sword/weapon and shield/defense wishes.
+- Updated Tower Scanner, Seed Summary, and Route Hint logic to account for equipment rewards.
+- Added Canvas rendering for equipment pickups and compact HUD equipment rows.
+- Added tests for five-floor generation, equipment pickup, undo restoration, and equipment-aware analysis.
+- Updated README, roadmap, package version, and local v0.8 notes.
+
 ## v0.7.1
 
 Feedback cleanup fix.
