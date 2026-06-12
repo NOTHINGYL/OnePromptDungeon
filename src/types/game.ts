@@ -31,6 +31,9 @@ export type Position = {
 };
 
 export type HeroStats = {
+  level: number;
+  exp: number;
+  nextLevelExp: number;
   hp: number;
   maxHp: number;
   atk: number;
@@ -50,6 +53,7 @@ export type Monster = {
   atk: number;
   def: number;
   gold: number;
+  exp: number;
   boss?: boolean;
 };
 

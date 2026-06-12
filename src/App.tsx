@@ -21,8 +21,8 @@ import type { FeedbackEvent } from "./types/feedback";
 const EXPECTED_TOWER_FLOORS = 5;
 const DEFAULT_WISH = "Rescue the princess from a five-floor tower that answers wishes.";
 const DIFFICULTIES: Difficulty[] = ["easy", "normal", "hard"];
-const SAVE_STORAGE_KEY = "opd.save.v0.8";
-const LEGACY_SAVE_STORAGE_KEYS = ["opd.save.v0.6"];
+const SAVE_STORAGE_KEY = "opd.save.v0.9";
+const LEGACY_SAVE_STORAGE_KEYS = ["opd.save.v0.8", "opd.save.v0.6"];
 const HISTORY_STORAGE_KEY = "opd.seedHistory.v0.6";
 const SOUND_STORAGE_KEY = "opd.soundMuted.v0.7";
 const WISH_PRESETS = [
@@ -30,6 +30,64 @@ const WISH_PRESETS = [
   { key: "preset.bossRush", wish: "boss rush tower with many fights and one treasure comeback", difficulty: "hard" as Difficulty },
   { key: "preset.treasure", wish: "treasure-heavy tower with gems, potions, and optional monsters", difficulty: "easy" as Difficulty },
   { key: "preset.shop", wish: "merchant economy tower, risky shop route, scarce rewards", difficulty: "normal" as Difficulty },
+];
+const SEED_GALLERY = [
+  {
+    key: "gallery.beginner",
+    seed: "BEGIN009",
+    difficulty: "easy" as Difficulty,
+    wish: "beginner five-floor tower with generous keys and safe equipment growth",
+    tags: ["style.keyPuzzle", "style.equipment"],
+  },
+  {
+    key: "gallery.keyPressure",
+    seed: "KEYS0909",
+    difficulty: "normal" as Difficulty,
+    wish: "five-floor key pressure tower with scarce blue keys and one risky shop route",
+    tags: ["style.keyPuzzle", "style.shop"],
+  },
+  {
+    key: "gallery.bossRush",
+    seed: "BOSS0909",
+    difficulty: "hard" as Difficulty,
+    wish: "boss rush tower with many fights, weapon timing, and a treasure comeback",
+    tags: ["style.bossRush", "style.combat"],
+  },
+  {
+    key: "gallery.merchant",
+    seed: "SHOP0909",
+    difficulty: "normal" as Difficulty,
+    wish: "merchant economy tower where shop timing and gold routing matter",
+    tags: ["style.shop", "style.combat"],
+  },
+  {
+    key: "gallery.sword",
+    seed: "SWORD909",
+    difficulty: "normal" as Difficulty,
+    wish: "sword first tower with weapon upgrades opening the risky route",
+    tags: ["style.equipment", "identity.weapon"],
+  },
+  {
+    key: "gallery.shield",
+    seed: "SHIELD09",
+    difficulty: "normal" as Difficulty,
+    wish: "shield first tower with defense checks and safe fight planning",
+    tags: ["style.equipment", "identity.shield"],
+  },
+  {
+    key: "gallery.treasureTrap",
+    seed: "TRAP0909",
+    difficulty: "hard" as Difficulty,
+    wish: "treasure trap tower with tempting gems, scarce keys, and dangerous monsters",
+    tags: ["style.treasure", "style.keyPuzzle"],
+  },
+  {
+    key: "gallery.oneHp",
+    seed: "ONEHP909",
+    difficulty: "hard" as Difficulty,
+    wish: "one hp escape tower with combat pressure, late shield, and exact route planning",
+    tags: ["style.combat", "identity.shield"],
+  },
 ];
 
 type SeedHistoryEntry = {
@@ -91,11 +149,22 @@ function isCompatibleSavedTower(tower: TowerState | null | undefined) {
 function normalizeSavedTower(tower: TowerState): TowerState {
   return {
     ...tower,
-    hero: { ...tower.hero, weapon: tower.hero.weapon ?? "none", shield: tower.hero.shield ?? "none" },
+    hero: normalizeHero(tower.hero),
     history: (tower.history ?? []).map((snapshot) => ({
       ...snapshot,
-      hero: { ...snapshot.hero, weapon: snapshot.hero.weapon ?? "none", shield: snapshot.hero.shield ?? "none" },
+      hero: normalizeHero(snapshot.hero),
     })),
+  };
+}
+
+function normalizeHero(hero: TowerState["hero"]): TowerState["hero"] {
+  return {
+    ...hero,
+    level: hero.level ?? 1,
+    exp: hero.exp ?? 0,
+    nextLevelExp: hero.nextLevelExp ?? 30,
+    weapon: hero.weapon ?? "none",
+    shield: hero.shield ?? "none",
   };
 }
 
@@ -265,6 +334,17 @@ export default function App() {
     setGeneratorStatus("generator.presetReady");
   };
 
+  const applyGallerySeed = (entry: (typeof SEED_GALLERY)[number]) => {
+    const nextTower = createGeneratedTower({ prompt: entry.wish, seed: entry.seed, difficulty: entry.difficulty });
+    setWish(entry.wish);
+    setSeed(entry.seed);
+    setDifficulty(entry.difficulty);
+    setTower(nextTower);
+    setResultDismissed(false);
+    addSeedHistory(nextTower);
+    setGeneratorStatus("generator.galleryLoaded");
+  };
+
   const restoreSeed = (entry: SeedHistoryEntry) => {
     const nextTower = createGeneratedTower({ prompt: entry.wish, seed: entry.seed, difficulty: entry.difficulty });
     setWish(entry.wish);
@@ -377,11 +457,15 @@ export default function App() {
               <div className="hero-meta">
                 <span>{t("status.floor")}</span>
                 <strong>{tower.currentFloorIndex + 1} / {tower.floors.length}</strong>
-                <span>Lv. 1 {t("status.hero")}</span>
-                <div className="exp-bar"><i style={{ width: `${Math.min(96, tower.moves * 4)}%` }} /></div>
+                <span>{t("status.level")} {tower.hero.level} {t("status.hero")}</span>
+                <div className="exp-row">
+                  <small>EXP</small>
+                  <b>{tower.hero.exp} / {tower.hero.nextLevelExp}</b>
+                </div>
+                <div className="exp-bar"><i style={{ width: `${Math.max(4, Math.min(100, (tower.hero.exp / tower.hero.nextLevelExp) * 100))}%` }} /></div>
                 <div className="equipment-lines">
-                  <span><SpriteIcon kind="sword" width={14} height={14} /> {t("status.weapon")} <b>{t(`equipment.${tower.hero.weapon}`)}</b></span>
-                  <span><SpriteIcon kind="shield" width={14} height={14} /> {t("status.shield")} <b>{t(`equipment.${tower.hero.shield}`)}</b></span>
+                  <span title={t("status.weapon")}><SpriteIcon kind="sword" width={14} height={14} /> <b>{t(`equipment.${tower.hero.weapon}`)}</b></span>
+                  <span title={t("status.shield")}><SpriteIcon kind="shield" width={14} height={14} /> <b>{t(`equipment.${tower.hero.shield}`)}</b></span>
                 </div>
               </div>
             </section>
@@ -442,6 +526,7 @@ export default function App() {
                 generatorStatus={t(generatorStatus)}
                 seedHistory={seedHistory}
                 seedSummary={seedSummary}
+                seedGallery={SEED_GALLERY}
                 rerollSeed={rerollSeed}
                 restoreSeed={restoreSeed}
                 seed={seed}
@@ -453,6 +538,7 @@ export default function App() {
                 t={t}
                 wish={wish}
                 applyPreset={applyPreset}
+                applyGallerySeed={applyGallerySeed}
                 close={() => setForgeOpen(false)}
               />
             ) : (
@@ -641,10 +727,10 @@ function TacticalPanel({
         <h2>{t("scanner.title")}</h2>
         <div className="scanner-grid">
           <ScanMetric label={t("scanner.reachable")} value={`${scanner.reachablePercent}%`} tone={scanner.reachablePercent > 50 ? "good" : "warn"} />
-          <ScanMetric label={t("scanner.safeFights")} value={scanner.safeFights} tone={scanner.safeFights > 0 ? "good" : "warn"} />
+          <ScanMetric label={t("scanner.pressure")} value={scanner.pressureScore} tone={scanner.pressureScore > 70 ? "bad" : scanner.pressureScore > 45 ? "warn" : "good"} />
           <ScanMetric label={t("scanner.keys")} value={`${scanner.remainingKeys.yellow}/${scanner.remainingKeys.blue}/${scanner.remainingKeys.red}`} />
           <ScanMetric label={t("scanner.doors")} value={`${scanner.blockedDoors.yellow}/${scanner.blockedDoors.blue}/${scanner.blockedDoors.red}`} tone="warn" />
-          <ScanMetric label={t("scanner.solvable")} value={seedSummary.solvable ? t("scanner.yes") : t("scanner.no")} tone={seedSummary.solvable ? "good" : "bad"} />
+          <ScanMetric label={t("scanner.dependency")} value={formatDependency(scanner.dependencies)} />
           <ScanMetric label={t("scanner.next")} value={t(scanner.nextTarget.key)} tone={scanner.nextTarget.tone} />
         </div>
       </section>
@@ -664,7 +750,18 @@ function ScanMetric({ label, tone, value }: { label: string; tone?: "good" | "wa
   );
 }
 
+function formatDependency(dependencies: ScannerReport["dependencies"]) {
+  const entries = [
+    ["K", dependencies.key],
+    ["C", dependencies.combat],
+    ["E", dependencies.equipment],
+    ["S", dependencies.shop],
+  ].sort((a, b) => Number(b[1]) - Number(a[1]));
+  return entries.slice(0, 2).map(([label, value]) => `${label}${value}`).join("/");
+}
+
 function WishForge({
+  applyGallerySeed,
   applyPreset,
   close,
   difficulty,
@@ -676,6 +773,7 @@ function WishForge({
   restoreSeed,
   seed,
   seedHistory,
+  seedGallery,
   seedSummary,
   setDifficulty,
   setSeed,
@@ -684,6 +782,7 @@ function WishForge({
   t,
   wish,
 }: {
+  applyGallerySeed: (entry: (typeof SEED_GALLERY)[number]) => void;
   applyPreset: (preset: (typeof WISH_PRESETS)[number]) => void;
   close: () => void;
   difficulty: Difficulty;
@@ -695,6 +794,7 @@ function WishForge({
   restoreSeed: (entry: SeedHistoryEntry) => void;
   seed: string;
   seedHistory: SeedHistoryEntry[];
+  seedGallery: typeof SEED_GALLERY;
   seedSummary: SeedSummary;
   setDifficulty: (difficulty: Difficulty) => void;
   setSeed: (seed: string) => void;
@@ -739,9 +839,22 @@ function WishForge({
           <strong>{t("report.title")}</strong>
           <span>{t("report.solvable")}: <b className={seedSummary.solvable ? "good" : "bad"}>{seedSummary.solvable ? t("scanner.yes") : t("scanner.no")}</b></span>
           <span>{t("report.shape")}: {seedSummary.totalKeys}K / {seedSummary.totalDoors}D / {seedSummary.totalMonsters}M / {seedSummary.equipment}E</span>
+          <span>{t("report.pressure")}: <b className={seedSummary.pressureScore > 70 ? "bad" : seedSummary.pressureScore > 45 ? "warn" : "good"}>{seedSummary.pressureScore}</b> · {t(seedSummary.routeIdentity)}</span>
           <span>{seedSummary.style.map((style) => t(style)).join(" · ")}</span>
         </div>
         <button className="generate-button" type="button" onClick={generateTower}>✦ {t("forge.generate")}</button>
+        <div className="seed-gallery">
+          <strong>{t("gallery.title")}</strong>
+          <div className="gallery-list">
+            {seedGallery.map((entry) => (
+              <button key={entry.seed} type="button" onClick={() => applyGallerySeed(entry)}>
+                <span>{t(`${entry.key}.name`)}</span>
+                <small>{entry.seed} · {t(`difficulty.${entry.difficulty}`)}</small>
+                <em>{entry.tags.map((tag) => t(tag)).join(" · ")}</em>
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="seed-history">
           <strong>{t("history.title")}</strong>
           {seedHistory.length > 0 ? seedHistory.map((entry) => (

@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.9.0
+
+Generator Identity Pass.
+
+- Added a curated Seed Gallery inside Wish Forge with eight one-click tower identities.
+- Added real hero EXP and level growth from monster defeats.
+- Added level-up stat gains and undo restoration for level/EXP state.
+- Added monster EXP values to the catalog.
+- Added route pressure and dependency metrics to Tower Scanner.
+- Added pressure score and route identity labels to Wish Forge seed summaries.
+- Updated the generator seed version so v0.9 tower identities are deterministic but distinct from older generated layouts.
+- Moved the active local save key to `opd.save.v0.9`.
+- Updated README, roadmap, package version, tests, and local v0.9 notes.
+
 ## v0.8.1
 
 Save migration fix.

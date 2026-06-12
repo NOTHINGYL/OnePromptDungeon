@@ -36,7 +36,7 @@ type WishProfile = {
 
 type Rng = () => number;
 
-const VERSION_SEED = "opd-v0.4";
+const VERSION_SEED = "opd-v0.9";
 
 const BASE_FLOORS: FloorDefinition[] = [
   {
@@ -153,6 +153,9 @@ const BASE_FLOORS: FloorDefinition[] = [
 
 const INITIAL_HERO: Record<Difficulty, HeroStats> = {
   easy: {
+    level: 1,
+    exp: 0,
+    nextLevelExp: 30,
     hp: 720,
     maxHp: 720,
     atk: 42,
@@ -165,6 +168,9 @@ const INITIAL_HERO: Record<Difficulty, HeroStats> = {
     shield: "none",
   },
   normal: {
+    level: 1,
+    exp: 0,
+    nextLevelExp: 30,
     hp: 700,
     maxHp: 700,
     atk: 38,
@@ -177,6 +183,9 @@ const INITIAL_HERO: Record<Difficulty, HeroStats> = {
     shield: "none",
   },
   hard: {
+    level: 1,
+    exp: 0,
+    nextLevelExp: 30,
     hp: 560,
     maxHp: 560,
     atk: 36,
@@ -233,7 +242,7 @@ export function createInitialTower(prompt = "Rescue the princess from the tower 
 }
 
 export function createGeneratedTower(options: TowerGenerationOptions = {}): TowerState {
-  const prompt = options.prompt?.trim() || "Rescue the princess from a three-floor tower that answers wishes.";
+  const prompt = options.prompt?.trim() || "Rescue the princess from a five-floor tower that answers wishes.";
   const difficulty = options.difficulty ?? "normal";
   const seed = normalizeSeed(options.seed || makeSeed(prompt));
   const rng = createRng(`${VERSION_SEED}:${difficulty}:${seed}:${prompt}`);

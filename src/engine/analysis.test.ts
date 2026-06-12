@@ -11,6 +11,8 @@ describe("tower analysis", () => {
     expect(summary.totalMonsters).toBeGreaterThan(0);
     expect(summary.totalDoors).toBeGreaterThan(0);
     expect(summary.equipment).toBeGreaterThan(0);
+    expect(summary.pressureScore).toBeGreaterThan(0);
+    expect(summary.routeIdentity).toMatch(/^identity\./);
     expect(summary.style.length).toBeGreaterThan(0);
   });
 
@@ -22,6 +24,8 @@ describe("tower analysis", () => {
 
     expect(scan.walkableCells).toBeGreaterThan(0);
     expect(scan.reachablePercent).toBeGreaterThan(0);
+    expect(scan.pressureScore).toBeGreaterThan(0);
+    expect(scan.dependencies.combat).toBeGreaterThanOrEqual(0);
     expect(scan.nextTarget.key).toMatch(/^scanner\.next\./);
     expect(hint[0][0].icon).toBe("hero");
   });

@@ -95,7 +95,18 @@ Goal: make OnePromptDungeon feel more like a complete compact Magic Tower run wi
 - Update Tower Scanner, Seed Summary, and Route Hint to surface equipment rewards
 - Keep the 15x15 board and GitHub Pages-only static deployment
 
-## v0.9 - Optional AI Mode
+## v0.9 - Generator Identity Pass
+
+Goal: make OnePromptDungeon feel like a prompt/seed-generated route puzzle rather than only a fixed Magic Tower clone.
+
+- Add curated Seed Gallery examples
+- Add EXP and level growth
+- Add route pressure scoring
+- Add seed identity labels
+- Improve Wish Forge summaries
+- Keep the project fully static and GitHub Pages-friendly
+
+## v1.0 - Optional AI Mode
 
 Goal: let LLMs produce flavor and structured level data while the local engine remains authoritative.
 

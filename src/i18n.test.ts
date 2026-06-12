@@ -12,11 +12,11 @@ describe("translate", () => {
   });
 
   it("interpolates log params", () => {
-    expect(translate("en", "log.defeated", { monster: "Green Slime", loss: 7, gold: 3 })).toBe(
-      "Defeated Green Slime. Lost 7 HP, gained 3 gold.",
+    expect(translate("en", "log.defeated", { monster: "Green Slime", loss: 7, gold: 3, exp: 4 })).toBe(
+      "Defeated Green Slime. Lost 7 HP, gained 3 gold and 4 EXP.",
     );
-    expect(translate("zh", "log.defeated", { monster: "绿色史莱姆", loss: 7, gold: 3 })).toBe(
-      "击败 绿色史莱姆。损失 7 生命，获得 3 金币。",
+    expect(translate("zh", "log.defeated", { monster: "绿色史莱姆", loss: 7, gold: 3, exp: 4 })).toBe(
+      "击败 绿色史莱姆。损失 7 生命，获得 3 金币和 4 经验。",
     );
   });
 });

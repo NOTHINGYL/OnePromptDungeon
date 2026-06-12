@@ -3,6 +3,9 @@ import { previewCombat } from "./combat";
 import type { HeroStats } from "../types/game";
 
 const hero: HeroStats = {
+  level: 1,
+  exp: 0,
+  nextLevelExp: 30,
   hp: 430,
   maxHp: 430,
   atk: 36,

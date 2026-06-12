@@ -374,9 +374,32 @@ dd {
   font-weight: 700;
 }
 
+.exp-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.exp-row small {
+  color: #f5d39a;
+  font-weight: 900;
+}
+
+.exp-row b {
+  overflow: hidden;
+  color: #dff8ff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .equipment-lines {
   display: grid;
-  gap: 2px;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
   margin-top: 1px;
   padding-top: 4px;
   border-top: 1px solid rgba(255, 214, 138, 0.14);
@@ -385,9 +408,9 @@ dd {
 .equipment-lines span {
   min-width: 0;
   display: grid;
-  grid-template-columns: 18px auto minmax(0, 1fr);
+  grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   color: var(--text);
   font-size: 0.66rem;
   line-height: 0.95;
@@ -877,6 +900,7 @@ canvas {
 }
 
 .forge-report,
+.seed-gallery,
 .seed-history {
   display: grid;
   gap: 4px;
@@ -886,6 +910,7 @@ canvas {
 }
 
 .forge-report strong,
+.seed-gallery strong,
 .seed-history strong {
   color: #35e2ff;
   font-size: 0.86rem;
@@ -896,6 +921,54 @@ canvas {
   color: var(--text);
   font-size: 0.78rem;
   line-height: 1.16;
+}
+
+.gallery-list {
+  max-height: 150px;
+  display: grid;
+  gap: 5px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.gallery-list button {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "name seed"
+    "tags tags";
+  gap: 2px 8px;
+  align-items: center;
+  padding: 5px 7px;
+  text-align: left;
+}
+
+.gallery-list button span {
+  grid-area: name;
+  overflow: hidden;
+  color: #7ee7ff;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gallery-list button small {
+  grid-area: seed;
+  color: var(--muted);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.gallery-list button em {
+  grid-area: tags;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.68rem;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .seed-history button {

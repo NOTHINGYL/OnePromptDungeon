@@ -66,6 +66,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
     atk: 20,
     def: 4,
     gold: 3,
+    exp: 4,
   },
   nightBat: {
     kind: "nightBat",
@@ -74,6 +75,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
     atk: 30,
     def: 8,
     gold: 5,
+    exp: 6,
   },
   boneGuard: {
     kind: "boneGuard",
@@ -82,6 +84,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
     atk: 42,
     def: 14,
     gold: 8,
+    exp: 9,
   },
   runeMage: {
     kind: "runeMage",
@@ -90,6 +93,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
     atk: 52,
     def: 8,
     gold: 12,
+    exp: 12,
   },
   ironKnight: {
     kind: "ironKnight",
@@ -98,6 +102,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
     atk: 70,
     def: 24,
     gold: 18,
+    exp: 18,
   },
   towerWarden: {
     kind: "towerWarden",
@@ -106,6 +111,7 @@ export const MONSTERS: Record<MonsterKind, Monster> = {
     atk: 92,
     def: 36,
     gold: 50,
+    exp: 30,
     boss: true,
   },
 };

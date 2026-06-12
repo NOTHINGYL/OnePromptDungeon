@@ -69,12 +69,19 @@ export function moveHero(tower: TowerState, direction: Direction): TowerState {
 
     nextTower.hero.hp -= preview.damageTaken;
     nextTower.hero.gold += monster.gold;
+    const levelResult = addExperience(nextTower.hero, monster.exp);
     activeFloor.contents[next.y][next.x] = { type: "empty" };
     if (monster.boss) {
       nextTower.bossDefeated = true;
     }
     nextTower.runStats = incrementRunStat(nextTower.runStats, "defeated");
-    pushLog(nextTower, "log.defeated", { monster: monster.name, loss: preview.damageTaken, gold: monster.gold });
+    pushLog(nextTower, levelResult.leveled ? "log.defeatedLevel" : "log.defeated", {
+      monster: monster.name,
+      loss: preview.damageTaken,
+      gold: monster.gold,
+      exp: monster.exp,
+      level: nextTower.hero.level,
+    });
   }
 
   const afterCombatContent = activeFloor.contents[next.y][next.x];
@@ -249,6 +256,24 @@ function tryOpenDoor(hero: HeroStats, tile: TileKind): { ok: true; opened: boole
   return { ok: true, opened: false, hero, message: "" };
 }
 
+function addExperience(hero: HeroStats, amount: number) {
+  hero.exp += amount;
+  let leveled = false;
+
+  while (hero.exp >= hero.nextLevelExp) {
+    hero.exp -= hero.nextLevelExp;
+    hero.level += 1;
+    hero.nextLevelExp += 18;
+    hero.maxHp += 120;
+    hero.hp += 120;
+    hero.atk += 4;
+    hero.def += 3;
+    leveled = true;
+  }
+
+  return { leveled };
+}
+
 function applyItem(hero: HeroStats, item: ItemKind) {
   switch (item) {
     case "smallPotion":
@@ -378,6 +403,9 @@ function cloneLog(log: TowerState["log"][number]) {
 function cloneHero(hero: HeroStats): HeroStats {
   return {
     ...hero,
+    level: hero.level ?? 1,
+    exp: hero.exp ?? 0,
+    nextLevelExp: hero.nextLevelExp ?? 30,
     weapon: hero.weapon ?? "none",
     shield: hero.shield ?? "none",
   };

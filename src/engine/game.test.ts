@@ -98,4 +98,27 @@ describe("shop and undo", () => {
     expect(restored.hero.weapon).toBe("none");
     expect(getCurrentFloor(restored).contents[13][2]).toEqual({ type: "item", item: "ironSword" });
   });
+
+  it("grants experience, levels up, and undo restores growth state", () => {
+    const tower = createInitialTower();
+    const floor = getCurrentFloor(tower);
+    tower.hero.exp = 28;
+    tower.player = { x: 1, y: 13 };
+    floor.tiles[13][2] = "floor";
+    floor.contents[13][2] = { type: "monster", monster: "greenSlime" };
+
+    const leveled = moveHero(tower, "right");
+
+    expect(leveled.hero.level).toBe(2);
+    expect(leveled.hero.exp).toBe(2);
+    expect(leveled.hero.nextLevelExp).toBe(48);
+    expect(leveled.hero.maxHp).toBe(820);
+    expect(leveled.log[0].key).toBe("log.defeatedLevel");
+
+    const restored = undo(leveled);
+
+    expect(restored.hero.level).toBe(1);
+    expect(restored.hero.exp).toBe(28);
+    expect(restored.hero.nextLevelExp).toBe(30);
+  });
 });

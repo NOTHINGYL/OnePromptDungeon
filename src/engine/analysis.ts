@@ -6,8 +6,15 @@ export type ScannerReport = {
   reachablePercent: number;
   reachableCells: number;
   walkableCells: number;
+  pressureScore: number;
   safeFights: number;
   riskyFights: number;
+  dependencies: {
+    combat: number;
+    key: number;
+    shop: number;
+    equipment: number;
+  };
   blockedDoors: {
     yellow: number;
     blue: number;
@@ -34,6 +41,8 @@ export type RouteHintStep = {
 export type SeedSummary = {
   solvable: boolean;
   style: string[];
+  pressureScore: number;
+  routeIdentity: string;
   totalMonsters: number;
   totalKeys: number;
   totalDoors: number;
@@ -46,6 +55,8 @@ export function scanTower(tower: TowerState, floor: FloorState): ScannerReport {
   const walkableCells = countWalkable(floor);
   const blockedDoors = countDoors(floor.tiles);
   const remainingKeys = countKeys(floor);
+  const equipment = countEquipment(floor);
+  const shops = countShops(floor);
   let safeFights = 0;
   let riskyFights = 0;
 
@@ -63,13 +74,29 @@ export function scanTower(tower: TowerState, floor: FloorState): ScannerReport {
   });
 
   const reachablePercent = Math.round((reachable.size / Math.max(1, walkableCells)) * 100);
+  const dependencies = {
+    combat: Math.min(99, safeFights * 8 + riskyFights * 14),
+    key: Math.min(99, (blockedDoors.yellow + blockedDoors.blue * 2 + blockedDoors.red * 3) * 8),
+    shop: Math.min(99, shops > 0 ? 32 + Math.max(0, 20 - tower.hero.gold) : 0),
+    equipment: Math.min(99, equipment * 16),
+  };
+  const pressureScore = calculatePressureScore({
+    reachablePercent,
+    safeFights,
+    riskyFights,
+    blockedDoors,
+    equipment,
+    shops,
+  });
 
   return {
     reachableCells: reachable.size,
     reachablePercent,
     walkableCells,
+    pressureScore,
     safeFights,
     riskyFights,
+    dependencies,
     blockedDoors,
     remainingKeys,
     nextTarget: chooseNextTarget(tower, floor, reachable, blockedDoors, safeFights),
@@ -148,7 +175,8 @@ export function summarizeSeed(tower: TowerState): SeedSummary {
   let hasPrincess = false;
 
   tower.floors.forEach((floor) => {
-    totalDoors += countDoors(floor.tiles).yellow + countDoors(floor.tiles).blue + countDoors(floor.tiles).red;
+    const floorDoors = countDoors(floor.tiles);
+    totalDoors += floorDoors.yellow + floorDoors.blue + floorDoors.red;
     forEachContent(floor, (content) => {
       if (content.type === "monster") {
         totalMonsters += 1;
@@ -172,6 +200,8 @@ export function summarizeSeed(tower: TowerState): SeedSummary {
   return {
     solvable: hasBoss && hasPrincess && tower.floors.every((floor, index) => index === tower.floors.length - 1 || floor.stairsUp),
     style: detectSeedStyle(tower.prompt, totalMonsters, totalKeys, shops, equipment),
+    pressureScore: calculateSeedPressure(totalMonsters, totalKeys, totalDoors, equipment, shops),
+    routeIdentity: detectRouteIdentity(tower.prompt, totalMonsters, totalKeys, totalDoors, equipment, shops),
     totalMonsters,
     totalKeys,
     totalDoors,
@@ -215,6 +245,52 @@ function chooseNextTarget(
 
 function isEquipmentItem(item: string) {
   return item === "ironSword" || item === "silverSword" || item === "ironShield" || item === "silverShield";
+}
+
+function calculatePressureScore({
+  blockedDoors,
+  equipment,
+  reachablePercent,
+  riskyFights,
+  safeFights,
+  shops,
+}: {
+  blockedDoors: ScannerReport["blockedDoors"];
+  equipment: number;
+  reachablePercent: number;
+  riskyFights: number;
+  safeFights: number;
+  shops: number;
+}) {
+  const doorPressure = blockedDoors.yellow * 4 + blockedDoors.blue * 7 + blockedDoors.red * 11;
+  const combatPressure = riskyFights * 9 + Math.max(0, 4 - safeFights) * 4;
+  const routePressure = Math.max(0, 70 - reachablePercent);
+  const rewardRelief = equipment * 3 + shops * 2;
+  return clampScore(Math.round(doorPressure + combatPressure + routePressure - rewardRelief));
+}
+
+function calculateSeedPressure(totalMonsters: number, totalKeys: number, totalDoors: number, equipment: number, shops: number) {
+  const keyPressure = Math.max(0, totalDoors - totalKeys) * 5;
+  const combatPressure = totalMonsters * 2;
+  const relief = equipment * 2 + shops * 3;
+  return clampScore(Math.round(22 + keyPressure + combatPressure - relief));
+}
+
+function detectRouteIdentity(prompt: string, totalMonsters: number, totalKeys: number, totalDoors: number, equipment: number, shops: number) {
+  const text = prompt.toLowerCase();
+  if (/boss|rush|首领|速通|守卫/.test(text)) return "identity.bossRush";
+  if (/shop|merchant|商店|商人/.test(text) || shops >= 1) return "identity.merchant";
+  if (/sword|weapon|剑|武器/.test(text)) return "identity.weapon";
+  if (/shield|defense|盾|防御/.test(text)) return "identity.shield";
+  if (/treasure|gem|potion|宝石|血瓶|宝藏/.test(text)) return "identity.treasure";
+  if (totalDoors > totalKeys + 3) return "identity.keyPressure";
+  if (equipment >= 8) return "identity.equipment";
+  if (totalMonsters >= 30) return "identity.combat";
+  return "identity.balanced";
+}
+
+function clampScore(value: number) {
+  return Math.max(1, Math.min(99, value));
 }
 
 function findReachable(tower: TowerState, floor: FloorState) {
@@ -291,6 +367,26 @@ function countKeys(floor: FloorState) {
     if (content.item === "redKey") keys.red += 1;
   });
   return keys;
+}
+
+function countEquipment(floor: FloorState) {
+  let total = 0;
+  forEachContent(floor, (content) => {
+    if (content.type === "item" && isEquipmentItem(content.item)) {
+      total += 1;
+    }
+  });
+  return total;
+}
+
+function countShops(floor: FloorState) {
+  let total = 0;
+  forEachContent(floor, (content) => {
+    if (content.type === "shop") {
+      total += 1;
+    }
+  });
+  return total;
 }
 
 function detectSeedStyle(prompt: string, totalMonsters: number, totalKeys: number, shops: number, equipment: number) {

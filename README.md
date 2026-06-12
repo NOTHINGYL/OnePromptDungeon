@@ -2,7 +2,7 @@
 
 OnePromptDungeon is a browser-playable, Magic Tower-like route puzzle designed for GitHub Pages.
 
-v0.8 expands the game into a five-floor equipment-growth tower: swords and shields now shape the route economy, the local Wish Forge always generates five-floor towers, and the GitHub Pages build stays fully static with no API key required.
+v0.9 is the Generator Identity Pass: Wish Forge now has a curated Seed Gallery, route pressure analysis, clearer seed identities, and real EXP/level growth while the GitHub Pages build stays fully static with no API key required.
 
 ## Play
 
@@ -43,9 +43,20 @@ npm test
 - Theme: use the title-bar theme button to switch classic light/dark
 - SFX: use the title-bar sound button to toggle local Web Audio feedback
 - Wish Forge: click the `Wish Forge` button or press `I` to open the local generator
+- Seed Gallery: open Wish Forge and load a curated route puzzle such as Boss Rush, Merchant Economy, Sword First, or One HP Escape
 - Monster Book: use the `Monster Book` button in Battle Forecast to inspect remaining monsters on the current floor
 - Shop: stand on the merchant tile and buy ATK, DEF, or HP upgrades
 - Goal: climb to 5F, gather weapons and shields, defeat the Crystal Warden, and rescue the princess
+
+## What v0.9 Includes
+
+- Curated Seed Gallery with 8 one-click tower identities: Beginner Tower, Key Starvation, Boss Rush, Merchant Economy, Sword First, Shield First, Treasure Trap, and One HP Escape
+- Real EXP and level growth: monsters grant EXP, level-ups increase HP, ATK, and DEF, and undo restores growth state
+- Tower Scanner now shows route pressure and dominant route dependencies instead of only raw reachability
+- Wish Forge seed report now includes pressure score and route identity labels
+- Generator seed version updated so v0.9 seeds better reflect the new route identity model
+- Default save key moved to `opd.save.v0.9` so older local saves do not mask the new v0.9 boot state
+- Updated tests for EXP, level-up undo, pressure scoring, seed identity, and i18n logs
 
 ## What v0.8 Includes
 
@@ -125,7 +136,8 @@ The project is inspired by deterministic tower RPGs: the fun comes from route pl
 - v0.6: Tower Scanner, dynamic route hints, generator presets, seed history, local save
 - v0.7: Combat animation feedback, local SFX, Monster Book, victory/failure run summary
 - v0.8: Five-floor equipment-growth tower
-- v0.9: Optional AI mode for story/theme/level JSON generation
+- v0.9: Generator identity pass with Seed Gallery, EXP growth, route pressure, and stronger Wish Forge summaries
+- v1.0: Optional AI mode for story/theme/level JSON generation
 
 More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 
