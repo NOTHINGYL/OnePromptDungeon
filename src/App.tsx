@@ -18,13 +18,15 @@ import { GameCanvas, type TowerTheme } from "./ui/GameCanvas";
 import type { Difficulty, FloorState, LogEntry, ShopUpgrade, TowerState } from "./types/game";
 import type { FeedbackEvent } from "./types/feedback";
 
-const DEFAULT_WISH = "Rescue the princess from a three-floor tower that answers wishes.";
+const EXPECTED_TOWER_FLOORS = 5;
+const DEFAULT_WISH = "Rescue the princess from a five-floor tower that answers wishes.";
 const DIFFICULTIES: Difficulty[] = ["easy", "normal", "hard"];
-const SAVE_STORAGE_KEY = "opd.save.v0.6";
+const SAVE_STORAGE_KEY = "opd.save.v0.8";
+const LEGACY_SAVE_STORAGE_KEYS = ["opd.save.v0.6"];
 const HISTORY_STORAGE_KEY = "opd.seedHistory.v0.6";
 const SOUND_STORAGE_KEY = "opd.soundMuted.v0.7";
 const WISH_PRESETS = [
-  { key: "preset.keyPuzzle", wish: "three-floor tower, scarce blue keys, one risky shop route", difficulty: "normal" as Difficulty },
+  { key: "preset.keyPuzzle", wish: "five-floor tower, scarce blue keys, one risky shop route", difficulty: "normal" as Difficulty },
   { key: "preset.bossRush", wish: "boss rush tower with many fights and one treasure comeback", difficulty: "hard" as Difficulty },
   { key: "preset.treasure", wish: "treasure-heavy tower with gems, potions, and optional monsters", difficulty: "easy" as Difficulty },
   { key: "preset.shop", wish: "merchant economy tower, risky shop route, scarce rewards", difficulty: "normal" as Difficulty },
@@ -70,10 +72,20 @@ function loadSavedTower() {
       return null;
     }
     const parsed = JSON.parse(saved) as TowerState;
-    return parsed?.seed && Array.isArray(parsed.floors) ? normalizeSavedTower(parsed) : null;
+    if (!isCompatibleSavedTower(parsed)) {
+      localStorage.removeItem(SAVE_STORAGE_KEY);
+      LEGACY_SAVE_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+      return null;
+    }
+    return normalizeSavedTower(parsed);
   } catch {
+    localStorage.removeItem(SAVE_STORAGE_KEY);
     return null;
   }
+}
+
+function isCompatibleSavedTower(tower: TowerState | null | undefined) {
+  return Boolean(tower?.seed && Array.isArray(tower.floors) && tower.floors.length >= EXPECTED_TOWER_FLOORS);
 }
 
 function normalizeSavedTower(tower: TowerState): TowerState {

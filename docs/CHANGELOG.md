@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.1
+
+Save migration fix.
+
+- Changed the local save key to `opd.save.v0.8` so old three-floor v0.6/v0.7 saves no longer override the five-floor v0.8 boot tower.
+- Added a saved-tower compatibility guard that discards invalid or pre-v0.8 saved towers.
+- Updated the default wish and Key Puzzle preset copy from three-floor to five-floor wording.
+
 ## v0.8.0
 
 Five-floor equipment-growth tower.
