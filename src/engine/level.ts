@@ -269,6 +269,7 @@ export function createGeneratedTower(options: TowerGenerationOptions = {}): Towe
       { key: "log.initialRoute" },
     ],
     runStats: { defeated: 0, doors: 0, pickups: 0, shops: 0 },
+    replay: [],
     history: [],
   };
 }

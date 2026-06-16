@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.0.0
+
+Shareable challenge launch.
+
+- Added challenge rank scoring to the run result panel.
+- Added a share-card preview with copyable challenge text and downloadable SVG card.
+- Added replay recording and Replay JSON export.
+- Added `docs/seeds/community-seeds.json` as the community seed contribution format.
+- Updated the active local save key to `opd.save.v1.0`.
+- Upgraded README positioning for Play Now, screenshots, seed gallery, and community submissions.
+- Updated package version and local v1.0 notes.
+
 ## v0.9.0
 
 Generator Identity Pass.

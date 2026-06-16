@@ -84,6 +84,22 @@ export type RunStats = {
   shops: number;
 };
 
+export type ReplayStep = {
+  step: number;
+  action: string;
+  floor: number;
+  from?: Position;
+  to?: Position;
+  hero: {
+    hp: number;
+    atk: number;
+    def: number;
+    gold: number;
+    level: number;
+  };
+  note?: string;
+};
+
 export type FloorState = {
   id: string;
   title: string;
@@ -108,6 +124,7 @@ export type TowerSnapshot = {
   lost: boolean;
   log: LogEntry[];
   runStats?: RunStats;
+  replay?: ReplayStep[];
 };
 
 export type TowerState = TowerSnapshot & {

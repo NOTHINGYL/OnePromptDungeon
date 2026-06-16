@@ -334,6 +334,7 @@ function snapshotTower(tower: TowerState): TowerSnapshot {
     lost: tower.lost,
     log: tower.log.map(cloneLog),
     runStats: cloneRunStats(tower.runStats),
+    replay: cloneReplay(tower.replay),
   };
 }
 
@@ -345,6 +346,7 @@ function cloneSnapshot(snapshot: TowerSnapshot): TowerSnapshot {
     player: { ...snapshot.player },
     log: snapshot.log.map(cloneLog),
     runStats: cloneRunStats(snapshot.runStats),
+    replay: cloneReplay(snapshot.replay),
   };
 }
 
@@ -356,6 +358,7 @@ function cloneTower(tower: TowerState): TowerState {
     player: { ...tower.player },
     log: tower.log.map(cloneLog),
     runStats: cloneRunStats(tower.runStats),
+    replay: cloneReplay(tower.replay),
     history: tower.history.map(cloneSnapshot),
   };
 }
@@ -413,6 +416,15 @@ function cloneHero(hero: HeroStats): HeroStats {
 
 function cloneRunStats(stats: TowerState["runStats"]) {
   return stats ? { ...stats } : { defeated: 0, doors: 0, pickups: 0, shops: 0 };
+}
+
+function cloneReplay(replay: TowerState["replay"]) {
+  return (replay ?? []).map((step) => ({
+    ...step,
+    from: step.from ? { ...step.from } : undefined,
+    to: step.to ? { ...step.to } : undefined,
+    hero: { ...step.hero },
+  }));
 }
 
 function incrementRunStat(stats: TowerState["runStats"], key: keyof NonNullable<TowerState["runStats"]>) {

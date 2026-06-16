@@ -106,7 +106,17 @@ Goal: make OnePromptDungeon feel like a prompt/seed-generated route puzzle rathe
 - Improve Wish Forge summaries
 - Keep the project fully static and GitHub Pages-friendly
 
-## v1.0 - Optional AI Mode
+## v1.0 - Shareable Challenge Launch
+
+Goal: make OnePromptDungeon easier to share, replay, and star as a complete GitHub Pages game.
+
+- Add challenge rank scoring
+- Add share cards and copyable challenge text
+- Add Replay JSON export
+- Add community seed format
+- Upgrade README and project presentation
+
+## v1.1 - Optional AI Mode
 
 Goal: let LLMs produce flavor and structured level data while the local engine remains authoritative.
 

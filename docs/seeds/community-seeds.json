@@ -1,0 +1,66 @@
+[
+  {
+    "name": "Beginner Tower",
+    "seed": "BEGIN009",
+    "difficulty": "easy",
+    "wish": "beginner five-floor tower with generous keys and safe equipment growth",
+    "tags": ["beginner", "equipment", "key-puzzle"],
+    "description": "A friendly first challenge for learning the five-floor route loop."
+  },
+  {
+    "name": "Key Starvation",
+    "seed": "KEYS0909",
+    "difficulty": "normal",
+    "wish": "five-floor key pressure tower with scarce blue keys and one risky shop route",
+    "tags": ["keys", "shop", "pressure"],
+    "description": "A route puzzle where blue-key timing and merchant choices matter."
+  },
+  {
+    "name": "Boss Rush",
+    "seed": "BOSS0909",
+    "difficulty": "hard",
+    "wish": "boss rush tower with many fights, weapon timing, and a treasure comeback",
+    "tags": ["boss", "combat", "hard"],
+    "description": "A high-pressure run built around fight order and late recovery."
+  },
+  {
+    "name": "Merchant Economy",
+    "seed": "SHOP0909",
+    "difficulty": "normal",
+    "wish": "merchant economy tower where shop timing and gold routing matter",
+    "tags": ["shop", "gold", "routing"],
+    "description": "A seed for testing when to buy ATK, DEF, or HP."
+  },
+  {
+    "name": "Sword First",
+    "seed": "SWORD909",
+    "difficulty": "normal",
+    "wish": "sword first tower with weapon upgrades opening the risky route",
+    "tags": ["weapon", "attack", "route"],
+    "description": "A route where attack growth opens safer midgame choices."
+  },
+  {
+    "name": "Shield First",
+    "seed": "SHIELD09",
+    "difficulty": "normal",
+    "wish": "shield first tower with defense checks and safe fight planning",
+    "tags": ["shield", "defense", "safe-fights"],
+    "description": "A seed that rewards defensive planning and low-damage fights."
+  },
+  {
+    "name": "Treasure Trap",
+    "seed": "TRAP0909",
+    "difficulty": "hard",
+    "wish": "treasure trap tower with tempting gems, scarce keys, and dangerous monsters",
+    "tags": ["treasure", "trap", "keys"],
+    "description": "Not every visible reward is worth the route cost."
+  },
+  {
+    "name": "One HP Escape",
+    "seed": "ONEHP909",
+    "difficulty": "hard",
+    "wish": "one hp escape tower with combat pressure, late shield, and exact route planning",
+    "tags": ["hard", "combat", "precision"],
+    "description": "A tight challenge designed for replay export and route comparison."
+  }
+]

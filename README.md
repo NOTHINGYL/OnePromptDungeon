@@ -1,8 +1,12 @@
 # OnePromptDungeon
 
-OnePromptDungeon is a browser-playable, Magic Tower-like route puzzle designed for GitHub Pages.
+[Play now](https://nothingyl.github.io/OnePromptDungeon/) · [Community seeds](docs/seeds/community-seeds.json) · [Roadmap](docs/ROADMAP.md)
 
-v0.9 is the Generator Identity Pass: Wish Forge now has a curated Seed Gallery, route pressure analysis, clearer seed identities, and real EXP/level growth while the GitHub Pages build stays fully static with no API key required.
+OnePromptDungeon is a browser-playable, prompt/seed-generated Magic Tower-like route puzzle designed for GitHub Pages.
+
+v1.0 is the Shareable Challenge Launch: generate a five-floor tower, clear it for a local challenge rank, export Replay JSON, download a share card, and submit community seeds by pull request. The game remains fully static: no login, backend, or API key is required.
+
+![OnePromptDungeon v1.0 screenshot](docs/assets/onepromptdungeon-v1-home.png)
 
 ## Play
 
@@ -46,7 +50,43 @@ npm test
 - Seed Gallery: open Wish Forge and load a curated route puzzle such as Boss Rush, Merchant Economy, Sword First, or One HP Escape
 - Monster Book: use the `Monster Book` button in Battle Forecast to inspect remaining monsters on the current floor
 - Shop: stand on the merchant tile and buy ATK, DEF, or HP upgrades
+- Result sharing: clear or fail a run to copy challenge text, download an SVG share card, or export Replay JSON
 - Goal: climb to 5F, gather weapons and shields, defeat the Crystal Warden, and rescue the princess
+
+## What v1.0 Includes
+
+- Challenge Rank: run results now score `S/A/B/C/D` from win state, moves, HP left, difficulty, pressure, and shop usage
+- Share Card: result panel can download a generated SVG card for the seed, rank, pressure, and route identity
+- Copy Result: result panel can copy a short challenge text with replayable URL
+- Replay JSON: movement, shop, undo, generator, and gallery actions are recorded as compact replay steps
+- Community seed format: `docs/seeds/community-seeds.json` documents curated seed entries for PR submissions
+- README launch polish: Play Now link, screenshot, feature summary, curated seed table, and contribution notes
+
+## Curated Challenges
+
+| Name | Seed | Difficulty | Identity |
+| --- | --- | --- | --- |
+| Beginner Tower | `BEGIN009` | Easy | Key puzzle + equipment |
+| Key Starvation | `KEYS0909` | Normal | Key pressure + shop route |
+| Boss Rush | `BOSS0909` | Hard | Boss rush + combat |
+| Merchant Economy | `SHOP0909` | Normal | Shop route + combat |
+| Sword First | `SWORD909` | Normal | Weapon route |
+| Shield First | `SHIELD09` | Normal | Shield route |
+| Treasure Trap | `TRAP0909` | Hard | Treasure + key puzzle |
+| One HP Escape | `ONEHP909` | Hard | Combat + precision |
+
+## Submit A Seed
+
+Add an entry to [docs/seeds/community-seeds.json](docs/seeds/community-seeds.json) with:
+
+- `name`
+- `seed`
+- `difficulty`
+- `wish`
+- `tags`
+- `description`
+
+Then open a pull request. Good seeds should be five-floor, reproducible, solvable, and have a clear route identity.
 
 ## What v0.9 Includes
 
@@ -137,7 +177,8 @@ The project is inspired by deterministic tower RPGs: the fun comes from route pl
 - v0.7: Combat animation feedback, local SFX, Monster Book, victory/failure run summary
 - v0.8: Five-floor equipment-growth tower
 - v0.9: Generator identity pass with Seed Gallery, EXP growth, route pressure, and stronger Wish Forge summaries
-- v1.0: Optional AI mode for story/theme/level JSON generation
+- v1.0: Shareable challenge launch with rank, cards, replay JSON, and community seeds
+- v1.1: Optional AI mode for story/theme/level JSON generation
 
 More detail lives in [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -154,8 +195,10 @@ src/
   ui/         Canvas board renderer
   App.tsx     Game HUD and controls
 docs/
+  assets/
   CHANGELOG.md
   ROADMAP.md
+  seeds/
 public/
   assets/     PNG sprite sheet
 ```

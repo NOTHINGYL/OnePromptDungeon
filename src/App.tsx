@@ -4,6 +4,7 @@ import { previewCombat } from "./engine/combat";
 import { buyUpgrade, isPlayerOnShop, moveHero, undo, type Direction } from "./engine/game";
 import { createGeneratedTower, getCurrentFloor, makeSeed, randomSeed } from "./engine/level";
 import { buildRouteHint, scanTower, summarizeSeed, type RouteHintStep, type ScannerReport, type SeedSummary } from "./engine/analysis";
+import { buildReplayExport, buildShareCardSvg, formatChallengeText, getChallengeResult } from "./engine/challenge";
 import { playSfx } from "./audio/sfx";
 import {
   detectLanguage,
@@ -15,14 +16,14 @@ import {
 import { spriteStyle, type SpriteName } from "./assets/sprites";
 import { isUiIcon, uiIconStyle } from "./assets/uiIcons";
 import { GameCanvas, type TowerTheme } from "./ui/GameCanvas";
-import type { Difficulty, FloorState, LogEntry, ShopUpgrade, TowerState } from "./types/game";
+import type { Difficulty, FloorState, LogEntry, ReplayStep, ShopUpgrade, TowerState } from "./types/game";
 import type { FeedbackEvent } from "./types/feedback";
 
 const EXPECTED_TOWER_FLOORS = 5;
 const DEFAULT_WISH = "Rescue the princess from a five-floor tower that answers wishes.";
 const DIFFICULTIES: Difficulty[] = ["easy", "normal", "hard"];
-const SAVE_STORAGE_KEY = "opd.save.v0.9";
-const LEGACY_SAVE_STORAGE_KEYS = ["opd.save.v0.8", "opd.save.v0.6"];
+const SAVE_STORAGE_KEY = "opd.save.v1.0";
+const LEGACY_SAVE_STORAGE_KEYS = ["opd.save.v0.9", "opd.save.v0.8", "opd.save.v0.6"];
 const HISTORY_STORAGE_KEY = "opd.seedHistory.v0.6";
 const SOUND_STORAGE_KEY = "opd.soundMuted.v0.7";
 const WISH_PRESETS = [
@@ -150,9 +151,11 @@ function normalizeSavedTower(tower: TowerState): TowerState {
   return {
     ...tower,
     hero: normalizeHero(tower.hero),
+    replay: normalizeReplay(tower.replay),
     history: (tower.history ?? []).map((snapshot) => ({
       ...snapshot,
       hero: normalizeHero(snapshot.hero),
+      replay: normalizeReplay(snapshot.replay),
     })),
   };
 }
@@ -166,6 +169,20 @@ function normalizeHero(hero: TowerState["hero"]): TowerState["hero"] {
     weapon: hero.weapon ?? "none",
     shield: hero.shield ?? "none",
   };
+}
+
+function normalizeReplay(replay: TowerState["replay"]): ReplayStep[] {
+  return (replay ?? []).map((step, index) => ({
+    ...step,
+    step: step.step ?? index + 1,
+    hero: {
+      hp: step.hero?.hp ?? 0,
+      atk: step.hero?.atk ?? 0,
+      def: step.hero?.def ?? 0,
+      gold: step.hero?.gold ?? 0,
+      level: step.hero?.level ?? 1,
+    },
+  }));
 }
 
 function loadSeedHistory(): SeedHistoryEntry[] {
@@ -241,13 +258,13 @@ export default function App() {
       } else {
         clearFeedback();
       }
-      return nextTower;
+      return appendReplayStep(nextTower, current, `move:${direction}`, nextTower.log[0]?.key);
     });
   }, [clearFeedback, triggerFeedback]);
 
   const restart = () => {
     const nextTower = createGeneratedTower({ prompt: wish, seed, difficulty });
-    setTower(nextTower);
+    setTower(appendReplayStep(nextTower, undefined, "restart", "restart"));
     setResultDismissed(false);
     addSeedHistory(nextTower);
     setGeneratorStatus("generator.restarted");
@@ -256,7 +273,7 @@ export default function App() {
   const generateTower = () => {
     const nextSeed = seed || makeSeed(wish);
     const nextTower = createGeneratedTower({ prompt: wish, seed: nextSeed, difficulty });
-    setTower(nextTower);
+    setTower(appendReplayStep(nextTower, undefined, "generate", "generate"));
     setResultDismissed(false);
     setSeed(nextTower.seed);
     addSeedHistory(nextTower);
@@ -295,7 +312,7 @@ export default function App() {
           label: t(nextTower.log[0].key),
         });
       }
-      return nextTower;
+      return appendReplayStep(nextTower, current, `shop:${upgrade}`, nextTower.log[0]?.key);
     });
   };
 
@@ -311,7 +328,7 @@ export default function App() {
           label: t("log.undid"),
         });
       }
-      return nextTower;
+      return appendReplayStep(nextTower, current, "undo", "undo");
     });
   }, [t, triggerFeedback]);
 
@@ -339,7 +356,7 @@ export default function App() {
     setWish(entry.wish);
     setSeed(entry.seed);
     setDifficulty(entry.difficulty);
-    setTower(nextTower);
+    setTower(appendReplayStep(nextTower, undefined, "gallery", entry.key));
     setResultDismissed(false);
     addSeedHistory(nextTower);
     setGeneratorStatus("generator.galleryLoaded");
@@ -350,7 +367,7 @@ export default function App() {
     setWish(entry.wish);
     setSeed(entry.seed);
     setDifficulty(entry.difficulty);
-    setTower(nextTower);
+    setTower(appendReplayStep(nextTower, undefined, "restore", entry.seed));
     setResultDismissed(false);
     setGeneratorStatus("generator.restored");
   };
@@ -673,6 +690,37 @@ function itemLabel(item: string) {
   return "Item";
 }
 
+function appendReplayStep(nextTower: TowerState, previousTower: TowerState | undefined, action: string, note?: string): TowerState {
+  const replay = nextTower.replay ?? [];
+  const last = replay[replay.length - 1];
+  const duplicateNoOp = previousTower === nextTower;
+  if (duplicateNoOp) {
+    return nextTower;
+  }
+
+  return {
+    ...nextTower,
+    replay: [
+      ...replay,
+      {
+        step: (last?.step ?? 0) + 1,
+        action,
+        floor: nextTower.currentFloorIndex + 1,
+        from: previousTower ? { ...previousTower.player } : undefined,
+        to: { ...nextTower.player },
+        hero: {
+          hp: nextTower.hero.hp,
+          atk: nextTower.hero.atk,
+          def: nextTower.hero.def,
+          gold: nextTower.hero.gold,
+          level: nextTower.hero.level,
+        },
+        note,
+      },
+    ].slice(-600),
+  };
+}
+
 function TacticalPanel({
   floor,
   monsterForecast,
@@ -931,6 +979,17 @@ function MonsterBook({ close, floor, t, tower }: { close: () => void; floor: Flo
 
 function ResultDialog({ close, shareTower, t, tower }: { close: () => void; shareTower: () => void; t: (key: string, params?: Record<string, string | number>) => string; tower: TowerState }) {
   const summary = getRunSummary(tower);
+  const challenge = getChallengeResult(tower);
+  const copyChallenge = async () => {
+    await navigator.clipboard?.writeText(formatChallengeText(tower, challenge, `${window.location.origin}${window.location.pathname}`));
+  };
+  const downloadReplay = () => {
+    downloadText(`opd-replay-${tower.seed}.json`, JSON.stringify(buildReplayExport(tower, challenge), null, 2), "application/json");
+  };
+  const downloadCard = () => {
+    downloadText(`opd-card-${tower.seed}.svg`, buildShareCardSvg(tower, challenge), "image/svg+xml");
+  };
+
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={tower.won ? t("result.victory") : t("result.fallen")}>
       <section className="modal-panel frame-panel result-panel">
@@ -939,7 +998,13 @@ function ResultDialog({ close, shareTower, t, tower }: { close: () => void; shar
           <button type="button" onClick={close}>×</button>
         </div>
         <p>{tower.won ? t("result.victorySub") : t("result.fallenSub")}</p>
+        <div className={`share-card-preview rank-${challenge.rank.toLowerCase()}`}>
+          <span>{t("challenge.label")}</span>
+          <strong>{challenge.rank}</strong>
+          <p>{tower.seed} · {t(challenge.identity)} · {t("challenge.pressure")} {challenge.pressure}</p>
+        </div>
         <div className="result-grid">
+          <ResultMetric label={t("challenge.rank")} value={`${challenge.rank} / ${challenge.score}`} />
           <ResultMetric label={t("app.seed")} value={tower.seed} />
           <ResultMetric label={t("forge.difficulty")} value={t(`difficulty.${tower.difficulty}`)} />
           <ResultMetric label={t("result.moves")} value={tower.moves} />
@@ -950,6 +1015,9 @@ function ResultDialog({ close, shareTower, t, tower }: { close: () => void; shar
           <ResultMetric label={t("status.gold")} value={tower.hero.gold} />
         </div>
         <div className="result-actions">
+          <button type="button" onClick={copyChallenge}>{t("challenge.copy")}</button>
+          <button type="button" onClick={downloadCard}>{t("challenge.card")}</button>
+          <button type="button" onClick={downloadReplay}>{t("challenge.replay")}</button>
           <button type="button" onClick={shareTower}>{t("forge.share")}</button>
           <button type="button" onClick={close}>{t("result.close")}</button>
         </div>
@@ -1009,6 +1077,17 @@ function getFloorMonsterRows(floor: FloorState, tower: TowerState) {
 function getRunSummary(tower: TowerState) {
   return tower.runStats ?? { defeated: 0, doors: 0, pickups: 0, shops: 0 };
 }
+
+function downloadText(filename: string, content: string, type: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 
 function formatLog(entry: LogEntry, t: (key: string, params?: Record<string, string | number>) => string) {
   const params = Object.fromEntries(

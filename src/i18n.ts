@@ -66,7 +66,7 @@ export const THEME_STORAGE_KEY = "opd.theme";
 
 const dictionary: Record<Language, Record<string, string>> = {
   en: {
-    "app.version": "v0.9 / Generator identity pass",
+    "app.version": "v1.0 / Shareable challenge launch",
     "app.title": "OnePromptDungeon",
     "app.seed": "Seed",
     "button.restart": "Restart",
@@ -216,6 +216,12 @@ const dictionary: Record<Language, Record<string, string>> = {
     "result.doors": "Doors",
     "result.shops": "Shops",
     "result.close": "Close",
+    "challenge.label": "Challenge result",
+    "challenge.rank": "Rank",
+    "challenge.pressure": "Pressure",
+    "challenge.copy": "Copy Result",
+    "challenge.card": "Download Card",
+    "challenge.replay": "Replay JSON",
     "floor.floor-1.title": "1F Stone Gate",
     "floor.floor-1.objective": "Learn the tower route: collect keys, gems, and reach the upper stairs.",
     "floor.floor-2.title": "2F Merchant Hall",
@@ -292,7 +298,7 @@ const dictionary: Record<Language, Record<string, string>> = {
     "log.undid": "Undid the last step.",
   },
   zh: {
-    "app.version": "v0.9 / 生成器识别度升级",
+    "app.version": "v1.0 / 可分享挑战版",
     "app.title": "OnePromptDungeon",
     "app.seed": "种子",
     "button.restart": "重开",
@@ -442,6 +448,12 @@ const dictionary: Record<Language, Record<string, string>> = {
     "result.doors": "开门",
     "result.shops": "交易",
     "result.close": "关闭",
+    "challenge.label": "挑战结果",
+    "challenge.rank": "评级",
+    "challenge.pressure": "压力",
+    "challenge.copy": "复制结果",
+    "challenge.card": "下载卡片",
+    "challenge.replay": "路线 JSON",
     "floor.floor-1.title": "第 1 层 石门大厅",
     "floor.floor-1.objective": "学习路线规划：收集钥匙、宝石，找到上楼梯。",
     "floor.floor-2.title": "第 2 层 商人回廊",
